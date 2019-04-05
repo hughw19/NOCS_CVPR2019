@@ -1,4 +1,3 @@
-# NOCS
 # Normalized Object Coordinate Space for Category-Level 6D Object Pose and Size Estimation
 This is a keras and tensorflow implementation of Normalized Object Coordinate Space for Category-Level 6D Object Pose and Size Estimation, a CVPR 2019 oral paper. 
 
