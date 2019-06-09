@@ -89,9 +89,9 @@ ul#tabs li a.selected { color: #000; background-color: #f2f1eb; font-weight: 500
 .head { color: #111; }
 .head h1 { font-size: 24pt; line-height:27pt; margin: 10px 0; }
 .head h1 a { text-decoration:none; }
-.authors { font-size: 12pt; margin: 0 0 1em 0; }
+.authors { font-size: 15pt; margin: 0 0 1em 0; }
 .affiliations { font-size: 11pt; margin: -0.5em 0 10pt 0; }
-.venue { font-style:italic; font-size: 12pt; margin: 1em 0 1em 0; }
+.venue { font-style:bold; font-size: 14pt; margin: 1em 0 1em 0; }
 
 /* Page footer */
 .footer { margin: 15px 5px 5px 10px; line-height: 130%; /*margin-left:auto; margin-right:auto;*/ }
