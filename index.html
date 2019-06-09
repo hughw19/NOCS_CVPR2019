@@ -1,3 +1,165 @@
-Coming soon. Meanwhile look at our pre-print here:
 
-<a href="https://arxiv.org/abs/1901.02970">https://arxiv.org/abs/1901.02970</a>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Normalized Object Coordinate Space for Category-Level 6D Object Pose and Size Estimation, CVPR 2019 (Oral)</title>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
+<!-- Meta tags for Zotero grab citation -->
+<meta name="citation_title" content="Normalized Object Coordinate Space for Category-Level 6D Object Pose and Size Estimation">
+<meta name="citation_author" content="Wang, He">
+<meta name="citation_author" content="Sridhar, Srinath">
+<meta name="citation_author" content="Huang, Jingwei">
+<meta name="citation_author" content="Valentin, Julien">
+<meta name="citation_author" content="Song, Shuran">
+<meta name="citation_author" content="Guibas, Leonidas">
+<meta name="citation_publication_date" content="2019">
+<meta name="citation_conference_title" content="IEEE Conference on Computer Vision and Pattern Recognition (CVPR 2019)">
+<!-- <meta name="citation_volume" content="271"> -->
+<!-- <meta name="citation_issue" content="20"> -->
+<!-- <meta name="citation_firstpage" content="11761"> -->
+<!-- <meta name="citation_lastpage" content="11766"> -->
+<meta name="citation_pdf_url" content="http://gvv.mpi-inf.mpg.de/projects/VNect/content/VNect_SIGGRAPH2017.pdf">
+
+<!-- Meta tags for search engines to crawl -->
+<meta name="robots" content="index,follow">
+<meta name="description" content="We present the first real-time method to capture the full global 3D skeletal pose of a human in a stable, temporally consistent manner using a single RGB camera. Our method combines a new convolutional neural network (CNN) based pose regressor with kinematic skeleton fitting. Our novel fully-convolutional pose formulation regresses 2D and 3D joint positions jointly in real time and does not require tightly cropped input frames. A real-time kinematic skeleton fitting method uses the CNN output to yield temporally stable 3D global pose reconstructions on the basis of a coherent kinematic skeleton. This makes our approach the first monocular RGB method usable in real-time applications such as 3D character control---thus far, the only monocular methods for such applications employed specialized RGB-D cameras. Our method's accuracy is quantitatively on par with the best offline 3D monocular RGB pose estimation methods. Our results are qualitatively comparable to, and sometimes better than, results from monocular RGB-D approaches, such as the Kinect. However, we show that our approach is more broadly applicable than RGB-D solutions, i.e., it works for outdoor scenes, community videos, and low quality commodity RGB cameras.">
+<meta name="keywords" content="body pose; monocular; real time">
+<link rel="author" href="http://www.mpi-inf.mpg.de/~dmetha/"/>
+
+<!-- Fonts and stuff -->
+<!--<link href='http://fonts.googleapis.com/css?family=Open+Sans:400italic,700italic,800italic,400,700,800' rel='stylesheet' type='text/css'>-->
+<link href='https://fonts.googleapis.com/css?family=Source+Sans+Pro:400italic,700italic,800italic,400,700,800' rel='stylesheet' type='text/css' />
+<link rel="stylesheet" type="text/css" href="css/project.css" media="screen" />
+<link rel="stylesheet" type="text/css" media="screen" href="css/iconize.css" />
+<!--<script src="js/google-code-prettify/prettify.js"></script>-->
+
+
+</head>
+
+<body>
+  <div id="content">
+    <div id="content-inner">
+      <div class="section logos">
+	<a href="http://www.mpi-inf.mpg.de/" target="_blank"><img src="images/mpi_web.png"></a>
+	<a href="http://www.cs.uni-saarland.de/" target="_blank"><img width="15%" height="15%" src="images/uds_csgrad_web.png"></a>
+	<a href="http://www.mslab.es" target="_blank"><img width="14%" height="14%" src="images/urjc.jpg"></a>
+      </div>
+
+      <div class="section head">
+	<h1>VNect: Real-time 3D Human Pose Estimation with a Single RGB Camera</h1>
+
+	<div class="authors">
+	  <a href="http://people.mpi-inf.mpg.de/~dmetha/" target="_blank">Dushyant Mehta</a><sup>1,2</sup>&#160;&#160;
+	  <a href="http://srinathsridhar.com/" target="_blank">Srinath Sridhar</a><sup>1</sup>&#160;&#160;
+	  <a href="http://people.mpi-inf.mpg.de/~osotnych/" target="_blank">Oleksandr Sotnychenko</a><sup>1</sup>&#160;&#160;
+	  <a href="https://people.epfl.ch/helge.rhodin" target="_blank">Helge Rhodin</a><sup>1</sup>&#160;&#160;
+	  <a href="http://gvv.mpi-inf.mpg.de/GVV_Team.html" target="_blank">Mohammad Shafiei</a><sup>1,2</sup>&#160;&#160;<br />
+	  <a href="http://people.mpi-inf.mpg.de/~hpseidel/" target="_blank">Hans-Peter Seidel</a><sup>1</sup>&#160;&#160;
+	  <a href="http://people.mpi-inf.mpg.de/~wxu/" target="_blank">Weipeng Xu</a><sup>1</sup>&#160;&#160;
+	  <a href="https://dancasas.github.io/" target="_blank">Dan Casas</a><sup>3</sup>&#160;&#160;
+	  <a href="http://www.mpi-inf.mpg.de/~theobalt/" target="_blank">Christian Theobalt</a><sup>1</sup>
+	</div>
+
+	<div class="affiliations">
+	  <sup>1</sup><a href="http://www.mpi-inf.mpg.de/" target="_blank">Max Planck Institute for Informatics</a> (<a href="http://gvv.mpi-inf.mpg.de/" target="_blank">GVV Group</a>)&#160;&#160;
+	  <sup>2</sup><a href="http://www.cs.uni-saarland.de/" target="_blank">Saarland University</a>&#160;&#160;
+	  <sup>3</sup><a href="http://www.mslab.es" target="_blank">Universidad Rey Juan Carlos</a>&#160;&#160;<br />
+	</div>
+
+	<div class="venue">ACM Transactions on Graphics (<a href="http://s2017.siggraph.org/" target="_blank">SIGGRAPH 2017</a>), Los Angeles, USA</div>
+      </div>
+	  
+	  	<div class="section abstract">
+
+      <div class="section teaser">
+      	<iframe width="640" height="360" src="https://www.youtube-nocookie.com/embed/W1ZNFfftx2E?showinfo=0&controls=1&modestbranding=0&autohide=1&theme=light" frameborder="0" webkitallowfullscreen mozallowfullscreen allowfullscreen></iframe>
+	<p style="font-size:11px; text-align:center">
+	  Download Video: <a href="content/VNect_SIGGRAPH2017.mp4" target="_blank">HD</a> (MP4, 1080p, 152 MB)
+	</p>
+      </div>
+
+      <div class="section abstract">
+	<h2>Abstract</h2>
+	<p>
+We present the first real-time method to capture the full global 3D skeletal pose of a human in a stable, temporally consistent manner using a single RGB camera. Our method combines a new convolutional neural network (CNN) based pose regressor with kinematic skeleton fitting. Our novel fully-convolutional pose formulation regresses 2D and 3D joint positions jointly in real time and does not require tightly cropped input frames. A real-time kinematic skeleton fitting method uses the CNN output to yield temporally stable 3D global pose reconstructions on the basis of a coherent kinematic skeleton. This makes our approach the first monocular RGB method usable in real-time applications such as 3D character control---thus far, the only monocular methods for such applications employed specialized RGB-D cameras. Our method's accuracy is quantitatively on par with the best offline 3D monocular RGB pose estimation methods. Our results are qualitatively comparable to, and sometimes better than, results from monocular RGB-D approaches, such as the Kinect. However, we show that our approach is more broadly applicable than RGB-D solutions, i.e., it works for outdoor scenes, community videos, and low quality commodity RGB cameras.
+	</p>
+      </div>
+
+      <div class="section downloads">
+	<h2>Downloads</h2>
+	<center>
+	  <ul>
+            <li class="grid">
+	      <div class = "griditem">
+		<a href="content/VNect_SIGGRAPH2017.pdf" target="_blank" class="imageLink"><img src = "images/VNect_SIGGRAPH2017_thumb.png"></a><br />
+		  Paper<br/><a href="content/VNect_SIGGRAPH2017.pdf" target="_blank">PDF, 15 MB</a>
+		</div>
+	      </li>
+	    <li class="grid"> 
+	       <div class = "griditem"> 
+		<a href="protected/mpii_vnect_model_code.zip" target="_blank" class="imageLink"><img src = "images/cnn.png"></a><br />
+	     	CNN Model + Weights<br /> <a href="protected/mpii_vnect_model_code.zip" target="_blank">ZIP, 57 MB</a>
+                <br />(See Contact section) 
+	       </div>
+	     </li>
+	    <li class="grid"> 
+	       <div class = "griditem"> 
+		<a href="http://gvv.mpi-inf.mpg.de/3dhp-dataset" target="_blank" class="imageLink"><img src = "images/dataset.png"></a><br />
+	     	MPI-INF-3DHP<br /> <a href="http://gvv.mpi-inf.mpg.de/3dhp-dataset" target="_blank">Dataset</a>
+	       </div>
+	     </li>
+	    </ul>
+	    </center>
+	    </div>
+<br />
+ <div class="section list">
+	<h2>Citation</h2>
+	<p><a href="content/VNect_SIGGRAPH2017.bib" target="_blank">BibTeX, 1 KB</a></p>
+	<div class="section bibtex">
+	      <pre>
+@inproceedings{VNect_SIGGRAPH2017,
+  author = {Mehta, Dushyant and Sridhar, Srinath and Sotnychenko, Oleksandr and Rhodin, Helge and Shafiei, Mohammad and Seidel, Hans-Peter and Xu, Weipeng and Casas, Dan and Theobalt, Christian},
+  title = {VNect: Real-time 3D Human Pose Estimation with a Single RGB Camera},
+  journal = {ACM Transactions on Graphics},
+  url = {http://gvv.mpi-inf.mpg.de/projects/VNect/},
+  numpages = {14},
+  volume={36},
+  number={4},
+  month = July,
+  year = {2017}
+  doi={10.1145/3072959.3073596}
+}
+      </pre>
+	  </div>
+      </div>
+    
+
+      <div class="section acknowledgments">
+	<h2>Acknowledgments</h2>
+	<p>
+	  This work is was funded by the ERC Starting Grant project CapReal (335545). Dan Casas was supported by a Marie Curie Individual Fellow, grant agreement 707326. We also thank <a href ="https://www.foundry.com/">Foundry</a> for license support.
+	</p>
+      </div>
+
+      <div class="section contact">
+	<h2>Contact</h2>
+        For questions, clarifications, and access to the trained model, please get in touch with:<br />
+	Dushyant Mehta<br /><a href="mailto:dmehta@mpi-inf.mpg.de">dmehta@mpi-inf.mpg.de</a>
+        <br />Please send an email from your institutional mail address, and do include your affiliation details and what you'd like to use the trained model for. 
+      </div>
+
+      <div class="section">
+	<hr class="smooth">
+	  This page is <a href="http://www.zotero.org" target="_blank">Zotero</a> translator friendly.
+          <!--Page last updated--> 
+              <!--#config timefmt="%d-%b-%Y" --><!--#echo var="LAST_MODIFIED" -->
+      </div>
+
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
+
