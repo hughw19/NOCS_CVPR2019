@@ -9,8 +9,8 @@ The repository includes:
 * Pre-trained weights
 
 # Datasets
-* CAMERA Dataset: [Training](http://download.cs.stanford.edu/orion/downloads/nocs/camera_train.zip)/[Test](http://download.cs.stanford.edu/orion/downloads/nocs/camera_val.zip)
-* Real Dataset: [Training](http://download.cs.stanford.edu/orion/downloads/nocs/real_train.zip)/[Test](http://download.cs.stanford.edu/orion/downloads/nocs/real_test.zip)
+* CAMERA Dataset: [Training](http://download.cs.stanford.edu/orion/nocs/camera_train.zip)/[Test](http://download.cs.stanford.edu/orion/nocs/camera_val.zip)
+* Real Dataset: [Training](http://download.cs.stanford.edu/orion/nocs/real_train.zip)/[Test](http://download.cs.stanford.edu/orion/nocs/real_test.zip)
 
 
 # Requirements
