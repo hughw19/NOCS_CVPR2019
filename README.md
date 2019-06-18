@@ -8,6 +8,10 @@ The repository includes:
 * Detection and evaluation code
 * Pre-trained weights
 
+# Datasets
+* CAMERA Dataset: [Training](http:/orion/downloads/nocs/camera_train.zip)/[Validation](http:/orion/downloads/nocs/camera_val.zip)
+
+
 # Requirements
 * Python 3.5
 * Tensorflow 1.3.0
