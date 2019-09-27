@@ -1271,99 +1271,6 @@ def build_fpn_mask_coords_deeper_graph(rois, feature_maps,
 
     return mrcnn_mask, mrcnn_coord_x, mrcnn_coord_y, mrcnn_coord_z, feature_x
 
-
-
-
-def build_fpn_coords_unet_graph(rois, feature_maps,
-                         image_shape, pool_size, num_classes, use_bn):
-    """Builds the computation graph of the coordinate map head of Feature Pyramid Network.
-
-    rois: [batch, num_rois, (y1, x1, y2, x2)] Proposal boxes in normalized
-          coordinates.
-    feature_maps: List of feature maps from different layers of the pyramid,
-                  [P2, P3, P4, P5]. Each has a different resolution.
-    image_shape: [height, width, depth]
-    pool_size: The width of the square feature map generated from ROI Pooling.
-    num_classes: number of classes, which determines the depth of the results
-
-    Returns: Coordinate maps [batch, roi_count, height, width, num_classes, 3]
-    """
-    # ROI Pooling
-    # Shape: [batch, boxes, pool_height, pool_width, channels]
-    x = PyramidROIAlign([pool_size, pool_size], image_shape,
-                        name="roi_align_coord_unet")([rois] + feature_maps)
-
-    # Conv layers
-    x = KL.TimeDistributed(KL.Conv2D(512, (3, 3), padding="same"),
-                           name="mrcnn_coord_unet_conv1")(x)
-    if use_bn:
-        x = KL.TimeDistributed(BatchNorm(axis=-1),
-                               name='mrcnn_coord_unet_bn1')(x)
-    conv1_output = KL.Activation('relu')(x)
-
-    x = KL.TimeDistributed(KL.MaxPool2D(pool_size=(2, 2)), name='mrcnn_coord_maxpool1')(conv1_output)
-
-    x = KL.TimeDistributed(KL.Conv2D(512, (3, 3), padding="same"),
-                           name="mrcnn_coord_unet_conv2")(x)
-    if use_bn:
-        x = KL.TimeDistributed(BatchNorm(axis=-1),
-                               name='mrcnn_coord_unet_bn2')(x)
-    conv2_output = KL.Activation('relu')(x)
-    x = KL.TimeDistributed(KL.MaxPool2D(pool_size=(2, 2)), name='mrcnn_coord_unet_maxpool2')(conv2_output)
-
-
-    x = KL.TimeDistributed(KL.Conv2D(512, (3, 3), padding="same"),
-                           name="mrcnn_coord_unet_conv3")(x)
-    if use_bn:
-        x = KL.TimeDistributed(BatchNorm(axis=-1),
-                               name='mrcnn_coord_unet_bn3')(x)
-    x = KL.Activation('relu')(x)
-
-    x = KL.TimeDistributed(KL.Conv2D(512, (3, 3), padding="same"),
-                           name="mrcnn_coord_unet_conv4")(x)
-    if use_bn:
-        x = KL.TimeDistributed(BatchNorm(axis=-1),
-                               name='mrcnn_coord_unet_bn4')(x)
-    x = KL.Activation('relu')(x)
-
-    deconv1_output = KL.TimeDistributed(KL.Conv2DTranspose(512, (2, 2), strides=2, activation="relu"),
-                           name="mrcnn_coord_unet_deconv1")(x)
-
-    x = KL.Add(name='mrcnn_coord_unet_cadd1')([conv2_output, deconv1_output])
-    x = KL.TimeDistributed(KL.Conv2D(512, (3, 3), padding="same"),
-                           name="mrcnn_coord_unet_conv5")(x)
-    if use_bn:
-        x = KL.TimeDistributed(BatchNorm(axis=-1),
-                               name='mrcnn_coord_unet_bn5')(x)
-    x = KL.Activation('relu')(x)
-
-    deconv2_output = KL.TimeDistributed(KL.Conv2DTranspose(512, (2, 2), strides=2, activation="relu"),
-                                        name="mrcnn_coord_unet_deconv2")(x)
-
-    x = KL.Add(name='mrcnn_coord_unet_add2')([conv1_output, deconv2_output])
-
-    x = KL.TimeDistributed(KL.Conv2D(512, (3, 3), padding="same"),
-                           name="mrcnn_coord_unet_conv6")(x)
-    if use_bn:
-        x = KL.TimeDistributed(BatchNorm(axis=-1),
-                               name='mrcnn_coord_unet_bn6')(x)
-    x_feat = KL.Activation('relu')(x)
-
-    x = KL.TimeDistributed(KL.Conv2D(3*num_classes, (1, 1), strides=1),
-                           name="mrcnn_coord_unet_conv_unet_final")(x_feat)
-
-    x = KL.Activation('sigmoid', name='mrcnn_coord_unet_unet_sigmoid')(x)
-    x = KL.Lambda(lambda t: tf.reshape(t,
-                                       [tf.shape(t)[0], tf.shape(t)[1], tf.shape(t)[2], tf.shape(t)[3], -1, 3]),
-                  name="mrcnn_coord_unet")(x)
-
-    mrcnn_coord_x = KL.Lambda(lambda x: x[:, :, :, :, :, 0], name="mrcnn_coord_x")(x)
-    mrcnn_coord_y = KL.Lambda(lambda x: x[:, :, :, :, :, 1], name="mrcnn_coord_y")(x)
-    mrcnn_coord_z = KL.Lambda(lambda x: x[:, :, :, :, :, 2], name="mrcnn_coord_z")(x)
-
-    return mrcnn_coord_x, mrcnn_coord_y, mrcnn_coord_z, x_feat
-
-
 def build_fpn_coords_bins_graph(rois, feature_maps,
                          image_shape, pool_size, num_classes, num_bins, use_bn):
     """Builds the computation graph of the coordinate map head of Feature Pyramid Network.
@@ -1533,8 +1440,6 @@ def build_fpn_coords_bins_delta_graph(rois, feature_maps,
            mrcnn_coord_x_delta, mrcnn_coord_y_delta, mrcnn_coord_z_delta
 
 
-
-
 def build_fpn_coord_bins_graph(rois, feature_maps,
                          image_shape, pool_size, num_classes, num_bins, use_bn, net_name):
     """Builds the computation graph of the coordinate map head of Feature Pyramid Network.
@@ -1597,376 +1502,6 @@ def build_fpn_coord_bins_graph(rois, feature_maps,
     return x, x_feature
 
 
-
-def build_cascade_coord_graph(mrcnn_coord_x_bin, mrcnn_coord_y_bin, mrcnn_coord_z_bin, num_bins, num_classes):
-    """Builds the computation graph of the second-stage coordinate map.
-
-        Inputs:
-        mrcnn_coord_x_bin, mrcnn_coord_y_bin, mrcnn_coord_z_bin:
-                [batch, roi_count, height, width, num_classes, num_bins]
-        image_shape: [height, width, depth]
-        pool_size: The width of the square feature map generated from ROI Pooling.
-        num_classes: number of classes, which determines the depth of the results
-
-        Returns: x, y, and z, Coordinate maps [batch, roi_count, height, width, num_classes]
-    """
-    x1 = KL.Lambda(lambda t: tf.reshape(t,
-                                       [tf.shape(t)[0], -1, 28, 28, num_bins*num_classes]),
-                  name="mrcnn_coord_cascade_final_reshape_x")(mrcnn_coord_x_bin)
-    x2 = KL.Lambda(lambda t: tf.reshape(t,
-                                        [tf.shape(t)[0], -1, 28, 28, num_bins*num_classes]),
-                   name="mrcnn_coord_cascade_final_reshape_y")(mrcnn_coord_y_bin)
-    x3 = KL.Lambda(lambda t: tf.reshape(t,
-                                        [tf.shape(t)[0], -1, 28, 28, num_bins*num_classes]),
-                   name="mrcnn_coord_cascade_final_reshape_z")(mrcnn_coord_z_bin)
-
-    x = KL.Concatenate(axis=4, name="mrcnn_coord_cascade_combine")([x1, x2, x3])
-    #x = KL.Lambda(lambda t: tf.reshape(t,[tf.shape(t)[0], tf.shape(t)[1], tf.shape(t)[2], tf.shape(t)[3], 768]))(x)
-    x = KL.TimeDistributed(KL.Conv2D(512, (3, 3), padding="same"),
-                           name="mrcnn_coord_cascade_conv1")(x)
-    x = KL.TimeDistributed(BatchNorm(axis=-1),
-                           name='mrcnn_coord_cascade_bn1')(x)
-    x = KL.Activation('relu')(x)
-
-    x = KL.TimeDistributed(KL.Conv2D(num_classes*3, (1, 1), padding="same"),
-                           name="mrcnn_coord_cascade_conv2")(x)
-    x = KL.TimeDistributed(BatchNorm(axis=-1),
-                           name='mrcnn_coord_cascade_bn2')(x)
-    x = KL.Activation('sigmoid', name='mrcnn_coord_cascade_sigmoid')(x)
-
-    x = KL.Lambda(lambda t: tf.reshape(t,
-                                       [tf.shape(t)[0], tf.shape(t)[1], tf.shape(t)[2], tf.shape(t)[3], num_classes, 3]),
-                  name="mrcnn_coord_cascade_final_reshape")(x)
-
-    mrcnn_coord_x = KL.Lambda(lambda x: x[:, :, :, :, :, 0],name="mrcnn_coord_x_final")(x)
-    mrcnn_coord_y = KL.Lambda(lambda x: x[:, :, :, :, :, 1],name="mrcnn_coord_y_final")(x)
-    mrcnn_coord_z = KL.Lambda(lambda x: x[:, :, :, :, :, 2],name="mrcnn_coord_z_final")(x)
-
-    return mrcnn_coord_x, mrcnn_coord_y, mrcnn_coord_z
-
-
-
-
-def build_cascade_coord_feature_graph(mrcnn_coord_x, mrcnn_coord_y, mrcnn_coord_z, mrcnn_coord_feature, num_classes):
-    """Builds the computation graph of the second-stage coordinate map.
-
-        Inputs:
-        mrcnn_coord_x_bin, mrcnn_coord_y_bin, mrcnn_coord_z_bin:
-                [batch, roi_count, height, width, num_classes, num_bins]
-        image_shape: [height, width, depth]
-        pool_size: The width of the square feature map generated from ROI Pooling.
-        num_classes: number of classes, which determines the depth of the results
-
-        Returns: x, y, and z, Coordinate maps [batch, roi_count, height, width, num_classes]
-    """
-    x1 = KL.Lambda(lambda t: tf.reshape(t,
-                                        [tf.shape(t)[0], -1, 28, 28, num_classes]),
-                   name="mrcnn_coord_cascade_final_reshape_x")(mrcnn_coord_x)
-    x2 = KL.Lambda(lambda t: tf.reshape(t,
-                                        [tf.shape(t)[0], -1, 28, 28, num_classes]),
-                   name="mrcnn_coord_cascade_final_reshape_y")(mrcnn_coord_y)
-    x3 = KL.Lambda(lambda t: tf.reshape(t,
-                                        [tf.shape(t)[0], -1, 28, 28, num_classes]),
-                   name="mrcnn_coord_cascade_final_reshape_z")(mrcnn_coord_z)
-
-    x_coord = KL.Concatenate(axis=4, name="mrcnn_coord_cascade_concat")([x1, x2, x3])
-    x_coord = KL.TimeDistributed(KL.Conv2D(512, (1, 1), padding="same"), name="mrcnn_coord_cascade_conv1")(x_coord)
-    x_coord = KL.Activation('relu')(x_coord)
-
-    x_feature = KL.TimeDistributed(KL.Conv2D(512, (1, 1), padding="same"), name="mrcnn_coord_cascade_conv2")(mrcnn_coord_feature)
-
-    x_feature = KL.Activation('relu')(x_feature)
-    x = KL.Add(name="mrcnn_coord_cascade_add")([x_coord, x_feature])
-
-    x = KL.TimeDistributed(KL.Conv2D(512, (1, 1), padding="same"), name="mrcnn_coord_cascade_conv3")(x)
-    x = KL.Activation('relu')(x)
-
-    x = KL.TimeDistributed(KL.Conv2D(num_classes*3, (1, 1), padding="same"),
-                           name="mrcnn_coord_cascade_conv_final")(x)
-    x = KL.Activation('sigmoid', name='mrcnn_coord_cascade_sigmoid')(x)
-
-    x = KL.Lambda(lambda t: tf.reshape(t,
-                                       [tf.shape(t)[0], tf.shape(t)[1], tf.shape(t)[2], tf.shape(t)[3], num_classes,
-                                        3]),
-                  name="mrcnn_coord_cascade_final_reshape")(x)
-
-    mrcnn_coord_x = KL.Lambda(lambda x: x[:, :, :, :, :, 0],name="mrcnn_coord_x_final")(x)
-    mrcnn_coord_y = KL.Lambda(lambda x: x[:, :, :, :, :, 1],name="mrcnn_coord_y_final")(x)
-    mrcnn_coord_z = KL.Lambda(lambda x: x[:, :, :, :, :, 2],name="mrcnn_coord_z_final")(x)
-
-    return mrcnn_coord_x, mrcnn_coord_y, mrcnn_coord_z
-
-
-
-def build_conv_rnn_graph(mrcnn_conv_rnn_feature, num_classes):
-    """
-    :param mrcnn_conv_rnn_feature: shape [batch, roi_count, height, width, 256 + 512],
-                                    concatenation of mrcnn mask feature and mrcnn coord feature
-    :param num_classes: config.NUM_CLASSES
-    :return: mask and coord maps
-    """
-
-    x = KL.TimeDistributed(KL.ConvLSTM2D(512, kernel_size=(3, 3), padding="same", return_sequences=False, stateful=True),
-                           name = 'mrcnn_rnn_conv_lstm')(mrcnn_conv_rnn_feature)
-    x = KL.Activation('relu')(x)
-    x = KL.TimeDistributed(KL.Conv2D(num_classes * 4, (1, 1), padding="same"),
-                           name="mrcnn_rnn_conv_final")(x)
-    x = KL.Activation('sigmoid', name='mrcnn_rnn_sigmoid')(x)
-    x = KL.Lambda(lambda t: tf.reshape(t,
-                            [tf.shape(t)[0], tf.shape(t)[1], tf.shape(t)[2], tf.shape(t)[3], num_classes, 4]),
-                            name="mrcnn_rnn_reshape_final")(x)
-    mrcnn_mask = KL.Lambda(lambda x: x[:, :, :, :, :, 0],name="mrcnn_rnn_mask_final")(x)
-    mrcnn_coord_x = KL.Lambda(lambda x: x[:, :, :, :, :, 1],name="mrcnn_rnn_coord_x_final")(x)
-    mrcnn_coord_y = KL.Lambda(lambda x: x[:, :, :, :, :, 2],name="mrcnn_rnn_coord_y_final")(x)
-    mrcnn_coord_z = KL.Lambda(lambda x: x[:, :, :, :, :, 3],name="mrcnn_rnn_coord_z_final")(x)
-
-    return mrcnn_mask, mrcnn_coord_x, mrcnn_coord_y, mrcnn_coord_z
-
-
-def build_cascade_coord_bins_feature_graph(mrcnn_coord_x_bin, mrcnn_coord_y_bin, mrcnn_coord_z_bin,
-                                           mrcnn_coord_feature_x, mrcnn_coord_feature_y, mrcnn_coord_feature_z,
-                                           num_bins, num_classes):
-    """Builds the computation graph of the second-stage coordinate map.
-
-        Inputs:
-        mrcnn_coord_x_bin, mrcnn_coord_y_bin, mrcnn_coord_z_bin:
-                [batch, roi_count, height, width, num_classes, num_bins]
-        image_shape: [height, width, depth]
-        pool_size: The width of the square feature map generated from ROI Pooling.
-        num_classes: number of classes, which determines the depth of the results
-
-        Returns: x, y, and z, Coordinate maps [batch, roi_count, height, width, num_classes]
-    """
-    x1 = KL.Lambda(lambda t: tf.reshape(t,
-                                       [tf.shape(t)[0], -1, 28, 28, num_bins*num_classes]),
-                  name="mrcnn_coord_cascade_final_reshape_x")(mrcnn_coord_x_bin)
-    x1 = KL.TimeDistributed(KL.Conv2D(512, (1, 1), padding="same"), name="mrcnn_coord_cascade_conv1")(x1)
-    x1 = KL.Activation('relu')(x1)
-
-
-    x2 = KL.Lambda(lambda t: tf.reshape(t,
-                                        [tf.shape(t)[0], -1, 28, 28, num_bins*num_classes]),
-                   name="mrcnn_coord_cascade_final_reshape_y")(mrcnn_coord_y_bin)
-    x2 = KL.TimeDistributed(KL.Conv2D(512, (1, 1), padding="same"), name="mrcnn_coord_cascade_conv2")(x2)
-    x2 = KL.Activation('relu')(x2)
-
-
-    x3 = KL.Lambda(lambda t: tf.reshape(t,
-                                        [tf.shape(t)[0], -1, 28, 28, num_bins*num_classes]),
-                   name="mrcnn_coord_cascade_final_reshape_z")(mrcnn_coord_z_bin)
-    x3 = KL.TimeDistributed(KL.Conv2D(512, (1, 1), padding="same"), name="mrcnn_coord_cascade_conv3")(x3)
-    x3 = KL.Activation('relu')(x3)
-
-
-
-    f1 = KL.Lambda(lambda t: tf.reshape(t,
-                                        [tf.shape(t)[0], -1, 28, 28, 256]),
-                   name="mrcnn_coord_cascade_final_reshape_feature_x")(mrcnn_coord_feature_x)
-    f1 = KL.TimeDistributed(KL.Conv2D(512, (1, 1), padding="same"), name="mrcnn_coord_cascade_conv4")(f1)
-    f1 = KL.Activation('relu')(f1)
-
-    f2 = KL.Lambda(lambda t: tf.reshape(t,
-                                        [tf.shape(t)[0], -1, 28, 28, 256]),
-                   name="mrcnn_coord_cascade_final_reshape_feature_y")(mrcnn_coord_feature_y)
-    f2 = KL.TimeDistributed(KL.Conv2D(512, (1, 1), padding="same"), name="mrcnn_coord_cascade_conv5")(f2)
-    f2 = KL.Activation('relu')(f2)
-
-    f3 = KL.Lambda(lambda t: tf.reshape(t,
-                                        [tf.shape(t)[0], -1, 28, 28, 256]),
-                   name="mrcnn_coord_cascade_final_reshape_feature_z")(mrcnn_coord_feature_z)
-    f3 = KL.TimeDistributed(KL.Conv2D(512, (1, 1), padding="same"), name="mrcnn_coord_cascade_conv6")(f3)
-    f3 = KL.Activation('relu')(f3)
-
-
-
-    x = KL.Add(name="mrcnn_coord_cascade_add")([x1, x2, x3, f1, f2, f3])
-    x = KL.TimeDistributed(KL.Conv2D(512, (1, 1), padding="same"), name="mrcnn_coord_cascade_conv7")(x)
-    x = KL.Activation('relu')(x)
-
-    x = KL.TimeDistributed(KL.Conv2D(num_classes * 3, (1, 1), padding="same"),
-                           name="mrcnn_coord_cascade_conv_final")(x)
-    x = KL.Activation('sigmoid', name='mrcnn_coord_cascade_sigmoid')(x)
-
-    x = KL.Lambda(lambda t: tf.reshape(t,
-                                       [tf.shape(t)[0], tf.shape(t)[1], tf.shape(t)[2], tf.shape(t)[3], num_classes,
-                                        3]),
-                  name="mrcnn_coord_cascade_final_reshape")(x)
-
-    mrcnn_coord_x = KL.Lambda(lambda x: x[:, :, :, :, :, 0],name="mrcnn_coord_x_final")(x)
-    mrcnn_coord_y = KL.Lambda(lambda x: x[:, :, :, :, :, 1],name="mrcnn_coord_y_final")(x)
-    mrcnn_coord_z = KL.Lambda(lambda x: x[:, :, :, :, :, 2],name="mrcnn_coord_z_final")(x)
-
-    return mrcnn_coord_x, mrcnn_coord_y, mrcnn_coord_z
-
-
-
-def build_fpn_coord_unet_graph(rois, feature_maps,
-                         image_shape, pool_size, num_classes, use_bn, net_name):
-    """Builds the computation graph of the coordinate map head of Feature Pyramid Network.
-
-    rois: [batch, num_rois, (y1, x1, y2, x2)] Proposal boxes in normalized
-          coordinates.
-    feature_maps: List of feature maps from different layers of the pyramid,
-                  [P2, P3, P4, P5]. Each has a different resolution.
-    image_shape: [height, width, depth]
-    pool_size: The width of the square feature map generated from ROI Pooling.
-    num_classes: number of classes, which determines the depth of the results
-
-    Returns: Coordinate maps [batch, roi_count, height, width, num_classes, num_bins]
-    """
-    # ROI Pooling
-    # Shape: [batch, boxes, pool_height, pool_width, channels]
-    x = PyramidROIAlign([pool_size, pool_size], image_shape,
-                        name="roi_align_{}".format(net_name))([rois] + feature_maps)
-
-    # Conv layers
-    x = KL.TimeDistributed(KL.Conv2D(256, (3, 3), padding="same"),
-                           name="mrcnn_{}_conv1".format(net_name))(x)
-    if use_bn:
-        x = KL.TimeDistributed(BatchNorm(axis=-1),
-                               name='mrcnn_{}_bn1'.format(net_name))(x)
-    conv1_output = KL.Activation('relu')(x)
-
-    x = KL.TimeDistributed(KL.MaxPool2D(pool_size=(2, 2)), name='mrcnn_{}_maxpool1'.format(net_name))(conv1_output)
-
-    x = KL.TimeDistributed(KL.Conv2D(256, (3, 3), padding="same"),
-                           name="mrcnn_{}_conv2".format(net_name))(x)
-    if use_bn:
-        x = KL.TimeDistributed(BatchNorm(axis=-1),
-                               name='mrcnn_{}_bn2'.format(net_name))(x)
-    conv2_output = KL.Activation('relu')(x)
-    x = KL.TimeDistributed(KL.MaxPool2D(pool_size=(2, 2)), name='mrcnn_{}_maxpool2'.format(net_name))(conv2_output)
-
-
-    x = KL.TimeDistributed(KL.Conv2D(512, (3, 3), padding="same"),
-                           name="mrcnn_{}_conv3".format(net_name))(x)
-    if use_bn:
-        x = KL.TimeDistributed(BatchNorm(axis=-1),
-                               name='mrcnn_{}_bn3'.format(net_name))(x)
-    x = KL.Activation('relu')(x)
-
-    x = KL.TimeDistributed(KL.Conv2D(256, (3, 3), padding="same"),
-                           name="mrcnn_{}_conv4".format(net_name))(x)
-    if use_bn:
-        x = KL.TimeDistributed(BatchNorm(axis=-1),
-                               name='mrcnn_{}_bn4'.format(net_name))(x)
-    x = KL.Activation('relu')(x)
-
-    deconv1_output = KL.TimeDistributed(KL.Conv2DTranspose(256, (2, 2), strides=2, activation="relu"),
-                           name="mrcnn_{}_deconv1".format(net_name))(x)
-    x = KL.Concatenate(axis=-1, name='mrcnn_{}_concat1'.format(net_name))([conv2_output, deconv1_output])
-    x = KL.TimeDistributed(KL.Conv2D(256, (3, 3), padding="same"),
-                           name="mrcnn_{}_conv5".format(net_name))(x)
-    if use_bn:
-        x = KL.TimeDistributed(BatchNorm(axis=-1),
-                               name='mrcnn_{}_bn5'.format(net_name))(x)
-    x = KL.Activation('relu')(x)
-
-    deconv2_output = KL.TimeDistributed(KL.Conv2DTranspose(256, (2, 2), strides=2, activation="relu"),
-                                        name="mrcnn_{}_deconv2".format(net_name))(x)
-
-    x = KL.Concatenate(axis=-1, name='mrcnn_{}_concat2'.format(net_name))([conv1_output, deconv2_output])
-
-    x = KL.TimeDistributed(KL.Conv2D(256, (3, 3), padding="same"),
-                           name="mrcnn_{}_conv6".format(net_name))(x)
-    if use_bn:
-        x = KL.TimeDistributed(BatchNorm(axis=-1),
-                               name='mrcnn_{}_bn6'.format(net_name))(x)
-    x_feat = KL.Activation('relu')(x)
-
-    x = KL.TimeDistributed(KL.Conv2D(num_classes, (1, 1), strides=1),
-                           name="mrcnn_{}_conv_unet_final".format(net_name))(x_feat)
-
-    x = KL.Activation('sigmoid', name='mrcnn_{}_unet_sigmoid'.format(net_name))(x)
-    return x, x_feat
-
-
-
-def build_fpn_coord_bins_unet_graph(rois, feature_maps,
-                         image_shape, pool_size, num_classes, num_bins, use_bn, net_name):
-    """Builds the computation graph of the coordinate map head of Feature Pyramid Network.
-
-    rois: [batch, num_rois, (y1, x1, y2, x2)] Proposal boxes in normalized
-          coordinates.
-    feature_maps: List of feature maps from different layers of the pyramid,
-                  [P2, P3, P4, P5]. Each has a different resolution.
-    image_shape: [height, width, depth]
-    pool_size: The width of the square feature map generated from ROI Pooling.
-    num_classes: number of classes, which determines the depth of the results
-
-    Returns: Coordinate maps [batch, roi_count, height, width, num_classes, num_bins]
-    """
-    # ROI Pooling
-    # Shape: [batch, boxes, pool_height, pool_width, channels]
-    x = PyramidROIAlign([pool_size, pool_size], image_shape,
-                        name="roi_align_{}".format(net_name))([rois] + feature_maps)
-
-    # Conv layers
-    x = KL.TimeDistributed(KL.Conv2D(256, (3, 3), padding="same"),
-                           name="mrcnn_{}_conv1".format(net_name))(x)
-    if use_bn:
-        x = KL.TimeDistributed(BatchNorm(axis=-1),
-                           name='mrcnn_{}_bn1'.format(net_name))(x)
-    conv1_output = KL.Activation('relu')(x)
-
-    x = KL.TimeDistributed(KL.MaxPool2D(pool_size=(2, 2)), name='mrcnn_{}_maxpool1'.format(net_name))(conv1_output)
-
-    x = KL.TimeDistributed(KL.Conv2D(256, (3, 3), padding="same"),
-                           name="mrcnn_{}_conv2".format(net_name))(x)
-    if use_bn:
-        x = KL.TimeDistributed(BatchNorm(axis=-1),
-                           name='mrcnn_{}_bn2'.format(net_name))(x)
-    conv2_output = KL.Activation('relu')(x)
-    x = KL.TimeDistributed(KL.MaxPool2D(pool_size=(2, 2)), name='mrcnn_{}_maxpool2'.format(net_name))(conv2_output)
-
-
-    x = KL.TimeDistributed(KL.Conv2D(512, (3, 3), padding="same"),
-                           name="mrcnn_{}_conv3".format(net_name))(x)
-    if use_bn:
-        x = KL.TimeDistributed(BatchNorm(axis=-1),
-                           name='mrcnn_{}_bn3'.format(net_name))(x)
-    x = KL.Activation('relu')(x)
-
-    x = KL.TimeDistributed(KL.Conv2D(256, (3, 3), padding="same"),
-                           name="mrcnn_{}_conv4".format(net_name))(x)
-    if use_bn:
-        x = KL.TimeDistributed(BatchNorm(axis=-1),
-                           name='mrcnn_{}_bn4'.format(net_name))(x)
-    x = KL.Activation('relu')(x)
-
-    deconv1_output = KL.TimeDistributed(KL.Conv2DTranspose(256, (2, 2), strides=2, activation="relu"),
-                           name="mrcnn_{}_deconv1".format(net_name))(x)
-    x = KL.Concatenate(axis=-1, name='mrcnn_{}_concat1'.format(net_name))([conv2_output, deconv1_output])
-    x = KL.TimeDistributed(KL.Conv2D(256, (3, 3), padding="same"),
-                           name="mrcnn_{}_conv5".format(net_name))(x)
-    if use_bn:
-        x = KL.TimeDistributed(BatchNorm(axis=-1),
-                           name='mrcnn_{}_bn5'.format(net_name))(x)
-    x = KL.Activation('relu')(x)
-
-    deconv2_output = KL.TimeDistributed(KL.Conv2DTranspose(256, (2, 2), strides=2, activation="relu"),
-                                        name="mrcnn_{}_deconv2".format(net_name))(x)
-
-    x = KL.Concatenate(axis=-1, name='mrcnn_{}_concat2'.format(net_name))([conv1_output, deconv2_output])
-
-    x = KL.TimeDistributed(KL.Conv2D(256, (3, 3), padding="same"),
-                           name="mrcnn_{}_conv6".format(net_name))(x)
-    if use_bn:
-        x = KL.TimeDistributed(BatchNorm(axis=-1),
-                           name='mrcnn_{}_bn6'.format(net_name))(x)
-    x_feat = KL.Activation('relu')(x)
-
-
-    x = KL.TimeDistributed(KL.Conv2D(num_bins*num_classes, (1, 1), strides=1),
-                           name="mrcnn_{}_conv_bins".format(net_name))(x_feat)
-
-    x = KL.Lambda(lambda t: tf.reshape(t,
-        [tf.shape(t)[0], tf.shape(t)[1], tf.shape(t)[2], tf.shape(t)[3], -1, num_bins]), name="mrcnn_{}_bins_reshape".format(net_name))(x)
-
-    x = KL.Activation('softmax', name='mrcnn_{}_bins'.format(net_name))(x)
-    return x, x_feat
-
-
 def build_fpn_coord_bins_delta_graph(rois, feature_maps,
                          image_shape, pool_size, num_classes, num_bins, net_name):
     """Builds the computation graph of the coordinate map head of Feature Pyramid Network.
@@ -2015,98 +1550,6 @@ def build_fpn_coord_bins_delta_graph(rois, feature_maps,
                            name="mrcnn_{}_deconv".format(net_name))(x)
 
     # after deconv, two braches diverge: one for bin classification, one for delta regression
-    x1 = KL.TimeDistributed(KL.Conv2D(num_bins*num_classes, (1, 1), strides=1),
-                           name="mrcnn_{}_conv_bins".format(net_name))(x)
-
-    x2 = KL.TimeDistributed(KL.Conv2D(num_bins * num_classes, (1, 1), strides=1),
-                            name="mrcnn_{}_conv_delta".format(net_name))(x)
-
-
-
-    x1 = KL.Lambda(lambda t: tf.reshape(t,
-        [tf.shape(t)[0], tf.shape(t)[1], tf.shape(t)[2], tf.shape(t)[3], -1, num_bins]), name="mrcnn_{}_bins_reshape".format(net_name))(x1)
-
-    x1 = KL.Activation('softmax', name='mrcnn_{}_bins'.format(net_name))(x1)
-
-    x2 = KL.Lambda(lambda t: tf.reshape(t,
-                                        [tf.shape(t)[0], tf.shape(t)[1], tf.shape(t)[2], tf.shape(t)[3], -1, num_bins]),
-                   name="mrcnn_{}_delta_reshape".format(net_name))(x2)
-
-    x2 = KL.Activation('sigmoid', name='mrcnn_{}_delta_bins'.format(net_name))(x2)
-
-
-
-    return x1, x2
-
-
-def build_fpn_coord_bins_delta_unet_graph(rois, feature_maps,
-                         image_shape, pool_size, num_classes, num_bins, net_name):
-    """Builds the computation graph of the coordinate map head of Feature Pyramid Network.
-
-    rois: [batch, num_rois, (y1, x1, y2, x2)] Proposal boxes in normalized
-          coordinates.
-    feature_maps: List of feature maps from different layers of the pyramid,
-                  [P2, P3, P4, P5]. Each has a different resolution.
-    image_shape: [height, width, depth]
-    pool_size: The width of the square feature map generated from ROI Pooling.
-    num_classes: number of classes, which determines the depth of the results
-
-    Returns: Coordinate maps [batch, roi_count, height, width, num_classes, num_bins]
-    """
-    # ROI Pooling
-    # Shape: [batch, boxes, pool_height, pool_width, channels]
-    x = PyramidROIAlign([pool_size, pool_size], image_shape,
-                        name="roi_align_{}".format(net_name))([rois] + feature_maps)
-
-    # Conv layers
-    x = KL.TimeDistributed(KL.Conv2D(256, (3, 3), padding="same"),
-                           name="mrcnn_{}_conv1".format(net_name))(x)
-    x = KL.TimeDistributed(BatchNorm(axis=-1),
-                           name='mrcnn_{}_bn1'.format(net_name))(x)
-    conv1_output = KL.Activation('relu')(x)
-
-    x = KL.TimeDistributed(KL.MaxPool2D(pool_size=(2, 2)), name='mrcnn_{}_maxpool1'.format(net_name))(conv1_output)
-
-    x = KL.TimeDistributed(KL.Conv2D(256, (3, 3), padding="same"),
-                           name="mrcnn_{}_conv2".format(net_name))(x)
-    x = KL.TimeDistributed(BatchNorm(axis=-1),
-                           name='mrcnn_{}_bn2'.format(net_name))(x)
-    conv2_output = KL.Activation('relu')(x)
-    x = KL.TimeDistributed(KL.MaxPool2D(pool_size=(2, 2)), name='mrcnn_{}_maxpool2'.format(net_name))(conv2_output)
-
-    x = KL.TimeDistributed(KL.Conv2D(512, (3, 3), padding="same"),
-                           name="mrcnn_{}_conv3".format(net_name))(x)
-    x = KL.TimeDistributed(BatchNorm(axis=-1),
-                           name='mrcnn_{}_bn3'.format(net_name))(x)
-    x = KL.Activation('relu')(x)
-
-    x = KL.TimeDistributed(KL.Conv2D(256, (3, 3), padding="same"),
-                           name="mrcnn_{}_conv4".format(net_name))(x)
-    x = KL.TimeDistributed(BatchNorm(axis=-1),
-                           name='mrcnn_{}_bn4'.format(net_name))(x)
-    x = KL.Activation('relu')(x)
-
-    deconv1_output = KL.TimeDistributed(KL.Conv2DTranspose(256, (2, 2), strides=2, activation="relu"),
-                                        name="mrcnn_{}_deconv1".format(net_name))(x)
-    x = KL.Concatenate(axis=-1, name='mrcnn_{}_concat1'.format(net_name))([conv2_output, deconv1_output])
-    x = KL.TimeDistributed(KL.Conv2D(256, (3, 3), padding="same"),
-                           name="mrcnn_{}_conv5".format(net_name))(x)
-    x = KL.TimeDistributed(BatchNorm(axis=-1),
-                           name='mrcnn_{}_bn5'.format(net_name))(x)
-    x = KL.Activation('relu')(x)
-
-    deconv2_output = KL.TimeDistributed(KL.Conv2DTranspose(256, (2, 2), strides=2, activation="relu"),
-                                        name="mrcnn_{}_deconv2".format(net_name))(x)
-
-    x = KL.Concatenate(axis=-1, name='mrcnn_{}_concat2'.format(net_name))([conv1_output, deconv2_output])
-
-    x = KL.TimeDistributed(KL.Conv2D(256, (3, 3), padding="same"),
-                           name="mrcnn_{}_conv6".format(net_name))(x)
-    x = KL.TimeDistributed(BatchNorm(axis=-1),
-                           name='mrcnn_{}_bn6'.format(net_name))(x)
-    x = KL.Activation('relu')(x)
-
-    # after conv6, two braches diverge: one for bin classification, one for delta regression
     x1 = KL.TimeDistributed(KL.Conv2D(num_bins*num_classes, (1, 1), strides=1),
                            name="mrcnn_{}_conv_bins".format(net_name))(x)
 
@@ -3558,9 +3001,10 @@ def data_generator(dataset, config, shuffle=True, augment=False, random_rois=0,
 
     source_image_ids = dataset.source_image_ids.copy()
     sources = source_image_ids.keys()
+    print(sources)
     
     # ShapeNetTOI, Real, coco
-    source_names = ['ShapeNetTOI', 'Real', 'coco']
+    source_names = ['CAMERA', 'Real', 'coco']
     weight = np.array([0, 0, 0], dtype=np.float32) 
     weight_consts = config.SOURCE_WEIGHT#[3, 1, 1]
     weight_sum = 0.0
@@ -3588,9 +3032,6 @@ def data_generator(dataset, config, shuffle=True, augment=False, random_rois=0,
                                                  config.BACKBONE_STRIDES,
                                                  config.RPN_ANCHOR_STRIDE)
 
-    if config.USE_RNN:
-        batch_size = 1
-        shuffle = False
 
     # Keras requires a generator to run indefinately.
     while True:
@@ -3721,7 +3162,7 @@ def data_generator(dataset, config, shuffle=True, augment=False, random_rois=0,
             raise
         except:
             # Log it and skip the image
-            logging.exception("Error processing image {}".format(dataset.image_info[image_id]))
+            logging.exception("Error processing image {}".format(dataset.image_info[draw_source_ids]))
             error_count += 1
             if error_count > 5:
                 raise
@@ -3926,122 +3367,320 @@ class MaskRCNN():
                 
 
 
-            if config.JOINT_MASK_COORDS:
-                if not config.USE_DEEPER_NET:
-                    mrcnn_mask, mrcnn_coord_x, mrcnn_coord_y, mrcnn_coord_z, mrcnn_coord_features = \
-                                                    build_fpn_mask_coords_graph(rois, 
-                                                                                mrcnn_feature_maps,
-                                                                                  config.IMAGE_SHAPE,
-                                                                                  config.COORD_POOL_SIZE,
-                                                                                  config.NUM_CLASSES,
-                                                                                  config.USE_BN)
+            #if config.JOINT_PREDICT:
+            mrcnn_mask, mrcnn_mask_feature   = build_fpn_mask_graph(rois, mrcnn_feature_maps,
+                                              config.IMAGE_SHAPE,
+                                              config.MASK_POOL_SIZE,
+                                              config.NUM_CLASSES,
+                                              config.USE_BN,
+                                              'mask')
+            ## mrcnn_mask_feature: [batch_size, num_of_rois, height, width, 256]
+
+
+
+            ## quantize the coordinate map and do classification
+            if config.COORD_USE_BINS:
+                if config.COORD_SHARE_WEIGHTS:
+                    mrcnn_coord_x_bin, mrcnn_coord_y_bin, mrcnn_coord_z_bin, mrcnn_coord_bin_feature\
+                        = build_fpn_coords_bins_graph(rois, mrcnn_feature_maps,
+                                                             config.IMAGE_SHAPE,
+                                                             config.COORD_POOL_SIZE,
+                                                             config.NUM_CLASSES,
+                                                             config.COORD_NUM_BINS,
+                                                             config.USE_BN)
                 else:
-                    mrcnn_mask, mrcnn_coord_x, mrcnn_coord_y, mrcnn_coord_z, mrcnn_coord_features = \
-                                                build_fpn_mask_coords_deeper_graph(rois, 
-                                                                            mrcnn_feature_maps,
-                                                                              config.IMAGE_SHAPE,
-                                                                              config.COORD_POOL_SIZE,
-                                                                              config.NUM_CLASSES,
-                                                                              config.USE_BN)
+                    if config.COORD_USE_DELTA:
+                        fn = build_fpn_coord_bins_delta_graph
+                        mrcnn_coord_x_bin, mrcnn_coord_x_delta_bins =  fn(rois, mrcnn_feature_maps,
+                                                                         config.IMAGE_SHAPE,
+                                                                         config.COORD_POOL_SIZE,
+                                                                         config.NUM_CLASSES,
+                                                                         config.COORD_NUM_BINS,
+                                                                         'coord_x')
+                        mrcnn_coord_y_bin, mrcnn_coord_y_delta_bins = fn(rois, mrcnn_feature_maps,
+                                                             config.IMAGE_SHAPE,
+                                                             config.COORD_POOL_SIZE,
+                                                             config.NUM_CLASSES,
+                                                             config.COORD_NUM_BINS,
+                                                             'coord_y')
+                        mrcnn_coord_z_bin, mrcnn_coord_z_delta_bins = fn(rois, mrcnn_feature_maps,
+                                                             config.IMAGE_SHAPE,
+                                                             config.COORD_POOL_SIZE,
+                                                             config.NUM_CLASSES,
+                                                             config.COORD_NUM_BINS,
+                                                             'coord_z')
+
+                    else:
+                        fn = build_fpn_coord_bins_graph
+                        mrcnn_coord_x_bin, mrcnn_coord_x_feature = fn(rois, mrcnn_feature_maps,
+                                                     config.IMAGE_SHAPE,
+                                                     config.COORD_POOL_SIZE,
+                                                     config.NUM_CLASSES,
+                                                     config.COORD_NUM_BINS,
+                                                     config.USE_BN,
+                                                     'coord_x')
+                        mrcnn_coord_y_bin, mrcnn_coord_y_feature = fn(rois, mrcnn_feature_maps,
+                                                       config.IMAGE_SHAPE,
+                                                       config.COORD_POOL_SIZE,
+                                                       config.NUM_CLASSES,
+                                                       config.COORD_NUM_BINS,
+                                                       config.USE_BN,
+                                                       'coord_y')
+                        mrcnn_coord_z_bin, mrcnn_coord_z_feature = fn(rois, mrcnn_feature_maps,
+                                                       config.IMAGE_SHAPE,
+                                                       config.COORD_POOL_SIZE,
+                                                       config.NUM_CLASSES,
+                                                       config.COORD_NUM_BINS,
+                                                       config.USE_BN,
+                                                       'coord_z')
+
+
+                ## calculate bin classification loss
+                if config.USE_SYMMETRY_LOSS:
+                    mrcnn_coords_bin = KL.Lambda(lambda x: tf.stack(x, axis=-1), name="mrcnn_coords_bin")(
+                        [mrcnn_coord_x_bin, mrcnn_coord_y_bin, mrcnn_coord_z_bin])
+                    coord_bin_loss = KL.Lambda(lambda x: mrcnn_coord_bins_symmetry_loss_graph(*x),
+                        name="mrcnn_coord_bin_loss")([target_mask, target_coords, target_class_ids,
+                                                      target_domain_labels, mrcnn_coords_bin])
+                    coord_x_bin_loss = KL.Lambda(lambda x: tf.reshape(x[0], (1,1)),
+                                                 name="mrcnn_coord_x_bin_loss")(coord_bin_loss)
+                    coord_y_bin_loss = KL.Lambda(lambda x: tf.reshape(x[1], (1,1)),
+                                                 name="mrcnn_coord_y_bin_loss")(coord_bin_loss)
+                    coord_z_bin_loss = KL.Lambda(lambda x: tf.reshape(x[2], (1,1)),
+                                                 name="mrcnn_coord_z_bin_loss")(coord_bin_loss)
+
+                    #target_coords = KL.Lambda(
+                    #    lambda x: tf.Print(x, [tf.shape(x)], message="target_coords shape after loss"))(target_coords)
+
+
+                else:
+                    coord_x_bin_loss = KL.Lambda(lambda x: mrcnn_coord_bins_loss_graph(*x),
+                                                 name="mrcnn_coord_x_bin_loss")(
+                        [target_mask, target_coord_x, target_class_ids, mrcnn_coord_x_bin])
+                    coord_y_bin_loss = KL.Lambda(lambda x: mrcnn_coord_bins_loss_graph(*x),
+                                                 name="mrcnn_coord_y_bin_loss")(
+                        [target_mask, target_coord_y, target_class_ids, mrcnn_coord_y_bin])
+                    coord_z_bin_loss = KL.Lambda(lambda x: mrcnn_coord_bins_loss_graph(*x),
+                                                 name="mrcnn_coord_z_bin_loss")(
+                        [target_mask, target_coord_z, target_class_ids, mrcnn_coord_z_bin])
+
+
+
+
+                    coord_x_softl1_loss = KL.Lambda(lambda x: mrcnn_coord_smooth_l1_loss_graph(*x), name="mrcnn_coord_x_l1_loss")(
+                        [target_mask, target_coord_x, target_class_ids, mrcnn_coord_x_bin])
+                    coord_y_softl1_loss = KL.Lambda(lambda x: mrcnn_coord_smooth_l1_loss_graph(*x), name="mrcnn_coord_y_l1_loss")(
+                        [target_mask, target_coord_y, target_class_ids, mrcnn_coord_y_bin])
+                    coord_z_softl1_loss = KL.Lambda(lambda x: mrcnn_coord_smooth_l1_loss_graph(*x), name="mrcnn_coord_z_l1_loss")(
+                        [target_mask, target_coord_z, target_class_ids, mrcnn_coord_z_bin])
+
+                    coord_x_loss = KL.Add(name="mrcnn_coord_x_loss")([coord_x_bin_loss, coord_x_softl1_loss])
+                    coord_y_loss = KL.Add(name="mrcnn_coord_y_loss")([coord_y_bin_loss, coord_y_softl1_loss])
+                    coord_z_loss = KL.Add(name="mrcnn_coord_z_loss")([coord_z_bin_loss, coord_z_softl1_loss])
+
+
                 
-                
-            
+                ## convert bins to float values
+                mrcnn_coord_x_shape = tf.shape(mrcnn_coord_x_bin)
+                mrcnn_coord_x_bin_reshape = KL.Lambda(lambda t: tf.reshape(t,
+                                                                    [-1, mrcnn_coord_x_shape[-1]]))(
+                    mrcnn_coord_x_bin)
+
+                mrcnn_coord_x_bin_ind = KL.Lambda(lambda t: K.argmax(t, axis=-1))(mrcnn_coord_x_bin_reshape)
+                mrcnn_coord_x_bin_value = KL.Lambda(lambda t: K.cast(t, dtype=tf.float32) \
+                                                        / (config.COORD_NUM_BINS))(mrcnn_coord_x_bin_ind)
+                mrcnn_coord_x_bin_value = KL.Lambda(lambda t: tf.reshape(t, mrcnn_coord_x_shape[:-1]))(mrcnn_coord_x_bin_value)
+
+                mrcnn_coord_y_shape = tf.shape(mrcnn_coord_y_bin)
+                mrcnn_coord_y_bin_reshape = KL.Lambda(lambda t: tf.reshape(t,
+                                                                            [-1, mrcnn_coord_y_shape[-1]]))(
+                    mrcnn_coord_y_bin)
+
+                mrcnn_coord_y_bin_ind = KL.Lambda(lambda t: K.argmax(t, axis=-1))(mrcnn_coord_y_bin_reshape)
+                mrcnn_coord_y_bin_value = KL.Lambda(lambda t: K.cast(t, dtype=tf.float32) \
+                                                                / (config.COORD_NUM_BINS))(mrcnn_coord_y_bin_ind)
+                mrcnn_coord_y_bin_value = KL.Lambda(lambda t: tf.reshape(t, mrcnn_coord_y_shape[:-1]))(
+                    mrcnn_coord_y_bin_value)
+
+                mrcnn_coord_z_shape = tf.shape(mrcnn_coord_z_bin)
+                mrcnn_coord_z_bin_reshape = KL.Lambda(lambda t: tf.reshape(t,
+                                                                            [-1, mrcnn_coord_z_shape[-1]]))(
+                    mrcnn_coord_z_bin)
+
+                mrcnn_coord_z_bin_ind = KL.Lambda(lambda t: K.argmax(t, axis=-1))(mrcnn_coord_z_bin_reshape)
+                mrcnn_coord_z_bin_value = KL.Lambda(lambda t: K.cast(t, dtype=tf.float32) \
+                                                                / (config.COORD_NUM_BINS))(mrcnn_coord_z_bin_ind)
+                mrcnn_coord_z_bin_value = KL.Lambda(lambda t: tf.reshape(t, mrcnn_coord_z_shape[:-1]))(
+                    mrcnn_coord_z_bin_value)
+
+
+
+                ## merge deltas and bin together for losses and coordinate values
+                if config.COORD_USE_DELTA:
+                    mrcnn_coord_x_delta = KL.Lambda(lambda x: mrcnn_coord_delta_index(*x) / (config.COORD_NUM_BINS),
+                                                    name="mrcnn_coord_delta_x")(
+                        [mrcnn_coord_x_delta_bins, mrcnn_coord_x_bin_ind])
+                    mrcnn_coord_y_delta = KL.Lambda(lambda x: mrcnn_coord_delta_index(*x) / (config.COORD_NUM_BINS),
+                                                    name="mrcnn_coord_delta_y")(
+                        [mrcnn_coord_y_delta_bins, mrcnn_coord_y_bin_ind])
+                    mrcnn_coord_z_delta = KL.Lambda(lambda x: mrcnn_coord_delta_index(*x) / (config.COORD_NUM_BINS),
+                                                    name="mrcnn_coord_delta_z")(
+                        [mrcnn_coord_z_delta_bins, mrcnn_coord_z_bin_ind])
+
+                    mrcnn_coord_x = KL.Add(name = "mrcnn_coord_x_final")([mrcnn_coord_x_bin_value, mrcnn_coord_x_delta])
+                    mrcnn_coord_y = KL.Add(name="mrcnn_coord_y_final")([mrcnn_coord_y_bin_value, mrcnn_coord_y_delta])
+                    mrcnn_coord_z = KL.Add(name="mrcnn_coord_z_final")([mrcnn_coord_z_bin_value, mrcnn_coord_z_delta])
+
+                    if config.USE_SYMMETRY_LOSS:
+                        mrcnn_coords_delta = KL.Lambda(lambda x: tf.stack(x, axis=5), name="mrcnn_coords_delta")(
+                            [mrcnn_coord_x, mrcnn_coord_y, mrcnn_coord_z])
+                        if config.COORD_REGRESS_LOSS == 'Soft_L1':
+                            mrcnn_coord_loss_graph = \
+                                lambda x, y, u, v, w: mrcnn_coord_symmetry_loss_graph(x, y, u, v, w, smooth_l1_diff)
+                        elif config.COORD_REGRESS_LOSS == 'L1':
+                            mrcnn_coord_loss_graph = \
+                                lambda x, y, u, v, w: mrcnn_coord_symmetry_loss_graph(x, y, u, v, w, tf.identity)
+                        elif config.COORD_REGRESS_LOSS == 'L2':
+                            mrcnn_coord_loss_graph = \
+                                lambda x, y, u, v, w: mrcnn_coord_symmetry_loss_graph(x, y, u, v, w, tf.square)
+                        else:
+                            assert False, 'wrong regression loss name!'
+
+                        coord_loss = KL.Lambda(lambda x: mrcnn_coord_loss_graph(*x), name="mrcnn_coords_delta_loss")(
+                            [target_mask, target_coords, target_class_ids, target_domain_labels, mrcnn_coords_delta])
+
+                        #coord_loss = K.switch(tf.size(coord_loss) > 0, K.mean(coord_loss), tf.constant([0.0, 0.0, 0.0]))
+
+                        coord_x_delta_loss = KL.Lambda(lambda x: tf.reshape(x[0], (1,1)), name="mrcnn_coord_x_delta_loss")(coord_loss)
+                        coord_y_delta_loss = KL.Lambda(lambda x: tf.reshape(x[1], (1,1)), name="mrcnn_coord_y_delta_loss")(coord_loss)
+                        coord_z_delta_loss = KL.Lambda(lambda x: tf.reshape(x[2], (1,1)), name="mrcnn_coord_z_delta_loss")(coord_loss)
+                    else:
+                        coord_x_delta_loss = KL.Lambda(lambda x: mrcnn_coord_l1_loss_graph(*x),
+                                                        name="mrcnn_coord_x_delta_loss")(
+                            [target_mask, target_coord_x, target_class_ids, mrcnn_coord_x])
+                        coord_y_delta_loss = KL.Lambda(lambda x: mrcnn_coord_l1_loss_graph(*x),
+                                                        name="mrcnn_coord_y_delta_loss")(
+                            [target_mask, target_coord_y, target_class_ids, mrcnn_coord_y])
+                        coord_z_delta_loss = KL.Lambda(lambda x: mrcnn_coord_l1_loss_graph(*x),
+                                                        name="mrcnn_coord_z_delta_loss")(
+                            [target_mask, target_coord_z, target_class_ids, mrcnn_coord_z])
+
+                    coord_x_loss = KL.Add(name="mrcnn_coord_x_loss")([coord_x_bin_loss, coord_x_delta_loss])
+                    coord_y_loss = KL.Add(name="mrcnn_coord_y_loss")([coord_y_bin_loss, coord_y_delta_loss])
+                    coord_z_loss = KL.Add(name="mrcnn_coord_z_loss")([coord_z_bin_loss, coord_z_delta_loss])
+
+
+                else:
+                    mrcnn_coord_x = KL.Lambda(lambda x: tf.identity(x), name="mrcnn_coord_x_final")(mrcnn_coord_x_bin_value)
+                    mrcnn_coord_y = KL.Lambda(lambda x: tf.identity(x), name="mrcnn_coord_y_final")(mrcnn_coord_y_bin_value)
+                    mrcnn_coord_z = KL.Lambda(lambda x: tf.identity(x), name="mrcnn_coord_z_final")(mrcnn_coord_z_bin_value)
+
+                    coord_x_loss = KL.Lambda(lambda x: tf.identity(x), name="mrcnn_coord_x_loss")(coord_x_bin_loss)
+                    coord_y_loss = KL.Lambda(lambda x: tf.identity(x), name="mrcnn_coord_y_loss")(coord_y_bin_loss)
+                    coord_z_loss = KL.Lambda(lambda x: tf.identity(x), name="mrcnn_coord_z_loss")(coord_z_bin_loss)
+
+
+
+            # direct regress
             else:
-                mrcnn_mask, mrcnn_mask_feature   = build_fpn_mask_graph(rois, mrcnn_feature_maps,
-                                                  config.IMAGE_SHAPE,
-                                                  config.MASK_POOL_SIZE,
-                                                  config.NUM_CLASSES,
-                                                  config.USE_BN,
-                                                  'mask')
-                ## mrcnn_mask_feature: [batch_size, num_of_rois, height, width, 256]
-                # direct regress
+                ## regress the coordinate map with shared weights
+                if config.COORD_SHARE_WEIGHTS:
+                    fn = build_fpn_coord_graph
 
-                fn = build_fpn_mask_graph
-
-                mrcnn_coord_x, mrcnn_coord_x_feature = fn(rois, mrcnn_feature_maps,
-                                          config.IMAGE_SHAPE,
-                                          config.COORD_POOL_SIZE,
-                                          config.NUM_CLASSES,
-                                          config.USE_BN,
-                                          'coord_x')
-                mrcnn_coord_y, mrcnn_coord_y_feature = fn(rois, mrcnn_feature_maps,
-                                           config.IMAGE_SHAPE,
-                                           config.COORD_POOL_SIZE,
-                                           config.NUM_CLASSES,
-                                           config.USE_BN,
-                                           'coord_y')
-                mrcnn_coord_z, mrcnn_coord_z_feature = fn(rois, mrcnn_feature_maps,
-                                           config.IMAGE_SHAPE,
-                                           config.COORD_POOL_SIZE,
-                                           config.NUM_CLASSES,
-                                           config.USE_BN,
-                                           'coord_z')
-
-                mrcnn_coord_feature = KL.Concatenate(name="mrcnn_coord_feature")(
-                    [mrcnn_coord_x_feature, mrcnn_coord_y_feature, mrcnn_coord_z_feature])
-                ## mrcnn_coord_feature: [batch_size, num_of_rois, height, width, 256*3]
-                
-                
-           
-            
-            
-            
-            
-            ## Final loss  
-            mask_loss = KL.Lambda(lambda x: mrcnn_mask_loss_graph(*x), 
-                                   name="mrcnn_mask_loss")([target_mask, target_class_ids, mrcnn_mask])
-            if config.USE_SYMMETRY_LOSS:
-                mrcnn_coords = KL.Lambda(lambda x: tf.stack(x, axis=5), name="mrcnn_coords_reg")(
-                    [mrcnn_coord_x, mrcnn_coord_y, mrcnn_coord_z])
-                if config.COORD_REGRESS_LOSS == 'Soft_L1':
-                    mrcnn_coord_loss_graph = \
-                        lambda x, y, u, v, w: mrcnn_coord_symmetry_loss_graph(x, y, u, v, w, smooth_l1_diff)
-                elif config.COORD_REGRESS_LOSS == 'L1':
-                    mrcnn_coord_loss_graph = \
-                        lambda x, y, u, v, w: mrcnn_coord_symmetry_loss_graph(x, y, u, v, w, tf.identity)
-                elif config.COORD_REGRESS_LOSS == 'L2':
-                    mrcnn_coord_loss_graph = \
-                        lambda x, y, u, v, w: mrcnn_coord_symmetry_loss_graph(x, y, u, v, w, tf.square)
+                    mrcnn_coord_x, mrcnn_coord_y, mrcnn_coord_z, mrcnn_coord_feature = fn(rois,
+                                                                                             mrcnn_feature_maps,
+                                                                                             config.IMAGE_SHAPE,
+                                                                                             config.COORD_POOL_SIZE,
+                                                                                             config.NUM_CLASSES,
+                                                                                             config.USE_BN)
+                    ## mrcnn_coord_feature: [batch_size, num_of_rois, height, width, 512]
+                    ## regress the coordinate map without sharing weights
                 else:
-                    assert False, 'wrong regression loss name!'
-
-                coord_loss =  KL.Lambda(lambda x: mrcnn_coord_loss_graph(*x), name="mrcnn_coords_intm_loss")(
-                    [target_mask, target_coords, target_class_ids, target_domain_labels, mrcnn_coords])
-
-                coord_x_loss = KL.Lambda(lambda x: x[0], name="mrcnn_coord_x_intm_loss")(coord_loss)
-                coord_y_loss = KL.Lambda(lambda x: x[1], name="mrcnn_coord_y_intm_loss")(coord_loss)
-                coord_z_loss = KL.Lambda(lambda x: x[2], name="mrcnn_coord_z_intm_loss")(coord_loss)
+                    fn = build_fpn_mask_graph
 
 
-            else:
-                if config.COORD_REGRESS_LOSS == 'Soft_L1':
-                    mrcnn_coord_loss_graph =  \
-                        lambda x, y, u, v: mrcnn_coord_reg_loss_graph(x, y, u, v, smooth_l1_diff)
-                elif config.COORD_REGRESS_LOSS == 'L1':
-                    mrcnn_coord_loss_graph = \
-                        lambda x, y, u, v: mrcnn_coord_reg_loss_graph(x, y, u, v, tf.identity)
-                elif config.COORD_REGRESS_LOSS == 'L2':
-                    mrcnn_coord_loss_graph = \
-                        lambda x, y, u, v: mrcnn_coord_reg_loss_graph(x, y, u, v, tf.square)
+                    mrcnn_coord_x, mrcnn_coord_x_feature = fn(rois, mrcnn_feature_maps,
+                                              config.IMAGE_SHAPE,
+                                              config.COORD_POOL_SIZE,
+                                              config.NUM_CLASSES,
+                                              config.USE_BN,
+                                              'coord_x')
+                    mrcnn_coord_y, mrcnn_coord_y_feature = fn(rois, mrcnn_feature_maps,
+                                               config.IMAGE_SHAPE,
+                                               config.COORD_POOL_SIZE,
+                                               config.NUM_CLASSES,
+                                               config.USE_BN,
+                                               'coord_y')
+                    mrcnn_coord_z, mrcnn_coord_z_feature = fn(rois, mrcnn_feature_maps,
+                                               config.IMAGE_SHAPE,
+                                               config.COORD_POOL_SIZE,
+                                               config.NUM_CLASSES,
+                                               config.USE_BN,
+                                               'coord_z')
+
+                    mrcnn_coord_feature = KL.Concatenate(name="mrcnn_coord_feature")(
+                        [mrcnn_coord_x_feature, mrcnn_coord_y_feature, mrcnn_coord_z_feature])
+                    ## mrcnn_coord_feature: [batch_size, num_of_rois, height, width, 256*3]
+
+
+                if config.USE_SYMMETRY_LOSS:
+                    mrcnn_coords = KL.Lambda(lambda x: tf.stack(x, axis=5), name="mrcnn_coords_reg")(
+                        [mrcnn_coord_x, mrcnn_coord_y, mrcnn_coord_z])
+                    if config.COORD_REGRESS_LOSS == 'Soft_L1':
+                        mrcnn_coord_loss_graph = \
+                            lambda x, y, u, v, w: mrcnn_coord_symmetry_loss_graph(x, y, u, v, w, smooth_l1_diff)
+                    elif config.COORD_REGRESS_LOSS == 'L1':
+                        mrcnn_coord_loss_graph = \
+                            lambda x, y, u, v, w: mrcnn_coord_symmetry_loss_graph(x, y, u, v, w, tf.identity)
+                    elif config.COORD_REGRESS_LOSS == 'L2':
+                        mrcnn_coord_loss_graph = \
+                            lambda x, y, u, v, w: mrcnn_coord_symmetry_loss_graph(x, y, u, v, w, tf.square)
+                    else:
+                        assert False, 'wrong regression loss name!'
+
+                    coord_loss =  KL.Lambda(lambda x: mrcnn_coord_loss_graph(*x), name="mrcnn_coords_intm_loss")(
+                        [target_mask, target_coords, target_class_ids, target_domain_labels, mrcnn_coords])
+
+                    coord_x_loss = KL.Lambda(lambda x: x[0], name="mrcnn_coord_x_intm_loss")(coord_loss)
+                    coord_y_loss = KL.Lambda(lambda x: x[1], name="mrcnn_coord_y_intm_loss")(coord_loss)
+                    coord_z_loss = KL.Lambda(lambda x: x[2], name="mrcnn_coord_z_intm_loss")(coord_loss)
+
+
                 else:
-                    assert False, 'wrong regression loss name!'
+                    if config.COORD_REGRESS_LOSS == 'Soft_L1':
+                        mrcnn_coord_loss_graph =  \
+                            lambda x, y, u, v: mrcnn_coord_reg_loss_graph(x, y, u, v, smooth_l1_diff)
+                    elif config.COORD_REGRESS_LOSS == 'L1':
+                        mrcnn_coord_loss_graph = \
+                            lambda x, y, u, v: mrcnn_coord_reg_loss_graph(x, y, u, v, tf.identity)
+                    elif config.COORD_REGRESS_LOSS == 'L2':
+                        mrcnn_coord_loss_graph = \
+                            lambda x, y, u, v: mrcnn_coord_reg_loss_graph(x, y, u, v, tf.square)
+                    else:
+                        assert False, 'wrong regression loss name!'
 
-                coord_x_loss = KL.Lambda(lambda x: mrcnn_coord_loss_graph(*x), name="mrcnn_coord_x_intm_loss")(
-                    [target_mask, target_coord_x, target_class_ids, mrcnn_coord_x])
+                    coord_x_loss = KL.Lambda(lambda x: mrcnn_coord_loss_graph(*x), name="mrcnn_coord_x_intm_loss")(
+                        [target_mask, target_coord_x, target_class_ids, mrcnn_coord_x])
 
 
-                coord_y_loss = KL.Lambda(lambda x: mrcnn_coord_loss_graph(*x), name="mrcnn_coord_y_intm_loss")(
-                    [target_mask, target_coord_y, target_class_ids, mrcnn_coord_y])
-                coord_z_loss = KL.Lambda(lambda x: mrcnn_coord_loss_graph(*x), name="mrcnn_coord_z_intm_loss")(
-                    [target_mask, target_coord_z, target_class_ids, mrcnn_coord_z])
+                    coord_y_loss = KL.Lambda(lambda x: mrcnn_coord_loss_graph(*x), name="mrcnn_coord_y_intm_loss")(
+                        [target_mask, target_coord_y, target_class_ids, mrcnn_coord_y])
+                    coord_z_loss = KL.Lambda(lambda x: mrcnn_coord_loss_graph(*x), name="mrcnn_coord_z_intm_loss")(
+                        [target_mask, target_coord_z, target_class_ids, mrcnn_coord_z])
 
 
-            coord_x_loss = KL.Lambda(lambda x: K.identity(x), name="mrcnn_coord_x_loss")(coord_x_loss)
-            coord_y_loss = KL.Lambda(lambda x: K.identity(x), name="mrcnn_coord_y_loss")(coord_y_loss)
-            coord_z_loss = KL.Lambda(lambda x: K.identity(x), name="mrcnn_coord_z_loss")(coord_z_loss)
+                coord_x_loss = KL.Lambda(lambda x: K.identity(x), name="mrcnn_coord_x_loss")(coord_x_loss)
+                coord_y_loss = KL.Lambda(lambda x: K.identity(x), name="mrcnn_coord_y_loss")(coord_y_loss)
+                coord_z_loss = KL.Lambda(lambda x: K.identity(x), name="mrcnn_coord_z_loss")(coord_z_loss)
 
 
-            ## Final metric  
+            
+            
+            
+            ## Final loss 
+            mask_loss = KL.Lambda(lambda x: mrcnn_mask_loss_graph(*x), name="mrcnn_mask_loss")(
+                [target_mask, target_class_ids, mrcnn_mask])
+            
             mrcnn_coords = KL.Lambda(lambda x: tf.stack(x, axis=-1), name="mrcnn_coords")(
                 [mrcnn_coord_x, mrcnn_coord_y, mrcnn_coord_z])
 
@@ -4109,53 +3748,170 @@ class MaskRCNN():
             h, w = config.IMAGE_SHAPE[:2]
             detection_boxes = KL.Lambda(lambda x: x[...,:4]/np.array([h, w, h, w]))(detections)
             
-            
-            if config.JOINT_MASK_COORDS:
-                if USE_DEEPER_NET:
-                    mrcnn_mask, mrcnn_coord_x, mrcnn_coord_y, mrcnn_coord_z, mrcnn_coord_features = \
-                                                    build_fpn_mask_coords_graph(rois, 
-                                                                                mrcnn_feature_maps,
-                                                                                  config.IMAGE_SHAPE,
-                                                                                  config.COORD_POOL_SIZE,
-                                                                                  config.NUM_CLASSES,
-                                                                                  config.USE_BN)
-                else:
-                    mrcnn_mask, mrcnn_coord_x, mrcnn_coord_y, mrcnn_coord_z, mrcnn_coord_features = \
-                                                build_fpn_mask_coords_deeper_graph(rois, 
-                                                                            mrcnn_feature_maps,
-                                                                              config.IMAGE_SHAPE,
-                                                                              config.COORD_POOL_SIZE,
-                                                                              config.NUM_CLASSES,
-                                                                              config.USE_BN)
-                
-            else:
-                # Create masks for detections
-                mrcnn_mask, mrcnn_mask_feature = build_fpn_mask_graph(detection_boxes, mrcnn_feature_maps,
-                                                  config.IMAGE_SHAPE,
-                                                  config.MASK_POOL_SIZE,
-                                                  config.NUM_CLASSES,
-                                                  config.USE_BN,
-                                                  'mask')
+            # Create masks for detections
+            mrcnn_mask, mrcnn_mask_feature = build_fpn_mask_graph(detection_boxes, mrcnn_feature_maps,
+                                              config.IMAGE_SHAPE,
+                                              config.MASK_POOL_SIZE,
+                                              config.NUM_CLASSES,
+                                              config.USE_BN,
+                                              'mask')
 
-                fn = build_fpn_mask_graph
-                mrcnn_coord_x, mrcnn_coord_x_feature = fn(detection_boxes, mrcnn_feature_maps,
+
+            if config.COORD_USE_BINS:
+                if config.COORD_SHARE_WEIGHTS:
+                    mrcnn_coord_x_bin, mrcnn_coord_y_bin, mrcnn_coord_z_bin\
+                        = build_fpn_coords_bins_graph(detection_boxes,
+                                                      mrcnn_feature_maps,
                                                       config.IMAGE_SHAPE,
                                                       config.COORD_POOL_SIZE,
                                                       config.NUM_CLASSES,
-                                                      config.USE_BN,
-                                                      'coord_x')
-                mrcnn_coord_y, mrcnn_coord_y_feature = fn(detection_boxes, mrcnn_feature_maps,
-                                                      config.IMAGE_SHAPE,
-                                                      config.COORD_POOL_SIZE,
-                                                      config.NUM_CLASSES,
-                                                      config.USE_BN,
-                                                      'coord_y')
-                mrcnn_coord_z, mrcnn_coord_z_feature = fn(detection_boxes, mrcnn_feature_maps,
-                                                      config.IMAGE_SHAPE,
-                                                      config.COORD_POOL_SIZE,
-                                                      config.NUM_CLASSES,
-                                                      config.USE_BN,
-                                                      'coord_z')
+                                                      config.COORD_NUM_BINS,
+                                                      config.USE_BN)
+
+                else:
+                    if config.COORD_USE_DELTA:
+                        fn = build_fpn_coord_bins_delta_graph
+
+
+                        mrcnn_coord_x_bin, mrcnn_coord_x_delta_bins = \
+                            fn(detection_boxes, mrcnn_feature_maps,
+                                                             config.IMAGE_SHAPE,
+                                                             config.COORD_POOL_SIZE,
+                                                             config.NUM_CLASSES,
+                                                             config.COORD_NUM_BINS, 'coord_x')
+                        mrcnn_coord_y_bin, mrcnn_coord_y_delta_bins = \
+                            fn(detection_boxes, mrcnn_feature_maps,
+                                                             config.IMAGE_SHAPE,
+                                                             config.COORD_POOL_SIZE,
+                                                             config.NUM_CLASSES,
+                                                             config.COORD_NUM_BINS, 'coord_y')
+                        mrcnn_coord_z_bin, mrcnn_coord_z_delta_bins = \
+                            fn(detection_boxes, mrcnn_feature_maps,
+                                                             config.IMAGE_SHAPE,
+                                                             config.COORD_POOL_SIZE,
+                                                             config.NUM_CLASSES,
+                                                             config.COORD_NUM_BINS, 'coord_z')
+
+                    else:
+                        fn = build_fpn_coord_bins_graph
+                        mrcnn_coord_x_bin, mrcnn_coord_x_feature = fn(detection_boxes, mrcnn_feature_maps,
+                                                                         config.IMAGE_SHAPE,
+                                                                         config.COORD_POOL_SIZE,
+                                                                         config.NUM_CLASSES,
+                                                                         config.COORD_NUM_BINS,
+                                                                           config.USE_BN,
+                                                                           'coord_x')
+                        mrcnn_coord_y_bin, mrcnn_coord_y_feature = fn(detection_boxes, mrcnn_feature_maps,
+                                                                   config.IMAGE_SHAPE,
+                                                                   config.COORD_POOL_SIZE,
+                                                                   config.NUM_CLASSES,
+                                                                   config.COORD_NUM_BINS,
+                                                                   config.USE_BN,
+                                                                   'coord_y')
+                        mrcnn_coord_z_bin, mrcnn_coord_z_feature = fn(detection_boxes, mrcnn_feature_maps,
+                                                                   config.IMAGE_SHAPE,
+                                                                   config.COORD_POOL_SIZE,
+                                                                   config.NUM_CLASSES,
+                                                                   config.COORD_NUM_BINS,
+                                                                   config.USE_BN,
+                                                                    'coord_z')
+
+            
+                # convert results from bin index to float value
+                # tf reshape can only handle 6 channels
+                mrcnn_coord_x_shape = tf.shape(mrcnn_coord_x_bin)
+                mrcnn_coord_x_bin_reshape = KL.Lambda(lambda t: tf.reshape(t,
+                                                                            [-1, mrcnn_coord_x_shape[-1]]))(
+                    mrcnn_coord_x_bin)
+
+                mrcnn_coord_x_bin_ind = KL.Lambda(lambda t: K.argmax(t, axis=-1))(mrcnn_coord_x_bin_reshape)
+                mrcnn_coord_x_bin_value = KL.Lambda(lambda t: K.cast(t, dtype=tf.float32) \
+                                                                / (config.COORD_NUM_BINS))(mrcnn_coord_x_bin_ind)
+                mrcnn_coord_x_bin_value = KL.Lambda(lambda t: tf.reshape(t, mrcnn_coord_x_shape[:-1]),
+                                                    name='mrcnn_coord_x_bin_value')(mrcnn_coord_x_bin_value)
+
+
+                mrcnn_coord_y_shape = tf.shape(mrcnn_coord_y_bin)
+                mrcnn_coord_y_bin_reshape = KL.Lambda(lambda t: tf.reshape(t,
+                                                                            [-1, mrcnn_coord_y_shape[-1]]))(
+                    mrcnn_coord_y_bin)
+
+                mrcnn_coord_y_bin_ind = KL.Lambda(lambda t: K.argmax(t, axis=-1))(mrcnn_coord_y_bin_reshape)
+                mrcnn_coord_y_bin_value = KL.Lambda(lambda t: K.cast(t, dtype=tf.float32) \
+                                                                / (config.COORD_NUM_BINS))(mrcnn_coord_y_bin_ind)
+                mrcnn_coord_y_bin_value = KL.Lambda(lambda t: tf.reshape(t, mrcnn_coord_y_shape[:-1]),
+                                                    name='mrcnn_coord_y_bin_value')(mrcnn_coord_y_bin_value)
+
+                mrcnn_coord_z_shape = tf.shape(mrcnn_coord_z_bin)
+                mrcnn_coord_z_bin_reshape = KL.Lambda(lambda t: tf.reshape(t,
+                                                                            [-1, mrcnn_coord_z_shape[-1]]))(
+                    mrcnn_coord_z_bin)
+
+                mrcnn_coord_z_bin_ind = KL.Lambda(lambda t: K.argmax(t, axis=-1))(mrcnn_coord_z_bin_reshape)
+                mrcnn_coord_z_bin_value = KL.Lambda(lambda t: K.cast(t, dtype=tf.float32) \
+                                                                / (config.COORD_NUM_BINS))(mrcnn_coord_z_bin_ind)
+                mrcnn_coord_z_bin_value = KL.Lambda(lambda t: tf.reshape(t, mrcnn_coord_z_shape[:-1]),
+                                                    name='mrcnn_coord_z_bin_value')(mrcnn_coord_z_bin_value)
+
+
+                if config.COORD_USE_DELTA:
+
+                    mrcnn_coord_x_delta = KL.Lambda(lambda x: mrcnn_coord_delta_index(*x) / (config.COORD_NUM_BINS),
+                                                    name="mrcnn_coord_delta_x")(
+                        [mrcnn_coord_x_delta_bins, mrcnn_coord_x_bin_ind])
+                    mrcnn_coord_y_delta = KL.Lambda(lambda x: mrcnn_coord_delta_index(*x) / (config.COORD_NUM_BINS),
+                                                    name="mrcnn_coord_delta_y")(
+                        [mrcnn_coord_y_delta_bins, mrcnn_coord_y_bin_ind])
+                    mrcnn_coord_z_delta = KL.Lambda(lambda x: mrcnn_coord_delta_index(*x) / (config.COORD_NUM_BINS),
+                                                    name="mrcnn_coord_delta_z")(
+                        [mrcnn_coord_z_delta_bins, mrcnn_coord_z_bin_ind])
+
+                    mrcnn_coord_x = KL.Add(name="mrcnn_mask_coord_x")([mrcnn_coord_x_bin_value, mrcnn_coord_x_delta])
+                    mrcnn_coord_y = KL.Add(name="mrcnn_mask_coord_y")([mrcnn_coord_y_bin_value, mrcnn_coord_y_delta])
+                    mrcnn_coord_z = KL.Add(name="mrcnn_mask_coord_z")([mrcnn_coord_z_bin_value, mrcnn_coord_z_delta])
+
+                else:
+                    mrcnn_coord_x = KL.Lambda(lambda x: x * 1, name="mrcnn_mask_coord_x")(mrcnn_coord_x_bin_value)
+                    mrcnn_coord_y = KL.Lambda(lambda x: x * 1, name="mrcnn_mask_coord_y")(mrcnn_coord_y_bin_value)
+                    mrcnn_coord_z = KL.Lambda(lambda x: x * 1, name="mrcnn_mask_coord_z")(mrcnn_coord_z_bin_value)
+
+
+            else:
+                ## regress the coordinate map with shared weights
+                if config.COORD_SHARE_WEIGHTS:
+                    mrcnn_coord_x, mrcnn_coord_y, mrcnn_coord_z, mrcnn_coord_feature = build_fpn_coord_graph(detection_boxes, mrcnn_feature_maps,
+                                                                                             config.IMAGE_SHAPE,
+                                                                                             config.COORD_POOL_SIZE,
+                                                                                             config.NUM_CLASSES,
+                                                                                             config.USE_BN)
+                ## regress the coordinate map without sharing weights
+                else:
+                    fn = build_fpn_mask_graph
+
+
+                    mrcnn_coord_x, mrcnn_coord_x_feature = fn(detection_boxes, mrcnn_feature_maps,
+                                                          config.IMAGE_SHAPE,
+                                                          config.COORD_POOL_SIZE,
+                                                          config.NUM_CLASSES,
+                                                          config.USE_BN,
+                                                          'coord_x')
+                    mrcnn_coord_y, mrcnn_coord_y_feature = fn(detection_boxes, mrcnn_feature_maps,
+                                                          config.IMAGE_SHAPE,
+                                                          config.COORD_POOL_SIZE,
+                                                          config.NUM_CLASSES,
+                                                          config.USE_BN,
+                                                          'coord_y')
+                    mrcnn_coord_z, mrcnn_coord_z_feature = fn(detection_boxes, mrcnn_feature_maps,
+                                                          config.IMAGE_SHAPE,
+                                                          config.COORD_POOL_SIZE,
+                                                          config.NUM_CLASSES,
+                                                          config.USE_BN,
+                                                          'coord_z')
+
+                    mrcnn_coord_feature = KL.Concatenate(name="mrcnn_coord_feature")(
+                        [mrcnn_coord_x_feature, mrcnn_coord_y_feature, mrcnn_coord_z_feature])
+                    ## mrcnn_coord_feature: [batch_size, num_of_rois, height, width, 256*3]
+
 
             model = KM.Model([input_image, input_image_meta], 
                         [detections, mrcnn_class, mrcnn_bbox,
@@ -4202,7 +3958,7 @@ class MaskRCNN():
         exlude: list of layer names to excluce
         """
         import h5py
-        from keras.engine import topology
+        from keras.engine import saving
 
         if exclude:
             by_name = True
@@ -4250,9 +4006,9 @@ class MaskRCNN():
             layers = filter(lambda l: l.name not in exclude, layers)
 
         if by_name:
-            topology.load_weights_from_hdf5_group_by_name(f, layers)
+            saving.load_weights_from_hdf5_group_by_name(f, layers)
         else:
-            topology.load_weights_from_hdf5_group(f, layers)
+            saving.load_weights_from_hdf5_group(f, layers)
         if hasattr(f, 'close'):
             f.close()
 
@@ -4283,6 +4039,7 @@ class MaskRCNN():
         # Add Losses
         # First, clear previously set losses to avoid duplication
         self.keras_model._losses = []
+        self.keras_model.metrics_tensors = []
         self.keras_model._per_input_losses = {}
         loss_names = ["rpn_class_loss", "rpn_bbox_loss",
                     "mrcnn_class_loss", "mrcnn_bbox_loss", "mrcnn_mask_loss",
@@ -4418,8 +4175,6 @@ class MaskRCNN():
 
         # Pre-defined layer regular expressions
         layer_regex = {
-            # only rnn part:
-            "rnn": r"(mrcnn_rnn\_.*)",
             # only coord map heads
             "coords": r"(mrcnn_coord\_.*)",
             # all layers but the backbone

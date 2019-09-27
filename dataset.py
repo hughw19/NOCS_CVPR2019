@@ -2,7 +2,6 @@ import os
 import sys
 import datetime
 
-from skimage import transform
 from skimage import exposure
 import time
 import glob
@@ -11,25 +10,23 @@ import cv2
 import glob
 from config import Config
 import utils
-import visualize
-
 
 sys.path.append('./cocoapi/PythonAPI')
 from pycocotools.coco import COCO
 
 
-class TOICOCODataset(utils.Dataset):
-    """Generates the ShapeNet synthetic dataset.
+class NOCSDataset(utils.Dataset):
+    """Generates the NOCS dataset.
     """
 
     def __init__(self, synset_names, subset, config=Config()):
         self._image_ids = []
         self.image_info = []
         # Background is always the first class
-        self.class_info = [{"source": "ShapeNetTOI", "id": 0, "name": "BG"}]
+        self.class_info = [{"source": "", "id": 0, "name": "BG"}]
         self.source_class_ids = {}
 
-        # which dataset: train/val
+        # which dataset: train/val/test
         self.subset = subset
         assert subset in ['train', 'val', 'test']
 
@@ -41,25 +38,24 @@ class TOICOCODataset(utils.Dataset):
         for i, obj_name in enumerate(synset_names):
             if i == 0:  ## class 0 is bg class
                 continue
-            self.add_class("ShapeNetTOI", i, obj_name)  ## class id starts with 1
+            self.add_class("BG", i, obj_name)  ## class id starts with 1
 
-    def load_scenes(self, dataset_dir, if_calculate_mean=False):
-        """Load a subset of the ShapeNetScene dataset.
-        dataset_dir: The root directory of the ShapeNetScene dataset.
+    def load_camera_scenes(self, dataset_dir, if_calculate_mean=False):
+        """Load a subset of the CAMERA dataset.
+        dataset_dir: The root directory of the CAMERA dataset.
         subset: What to load (train, val)
         if_calculate_mean: if calculate the mean color of the images in this dataset
         """
 
         image_dir = os.path.join(dataset_dir, self.subset)
-        source = "ShapeNetTOI"
+        source = "CAMERA"
         num_images_before_load = len(self.image_info)
 
         folder_list = [name for name in os.listdir(image_dir) if os.path.isdir(os.path.join(image_dir, name))]
+        
         num_total_folders = len(folder_list)
 
         image_ids = range(10*num_total_folders)
-        #image_ids = range(10 * 100)
-
         color_mean = np.zeros((0, 3), dtype=np.float32)
         # Add images
         for i in image_ids:
@@ -109,17 +105,18 @@ class TOICOCODataset(utils.Dataset):
         self.source_image_ids[source] = np.arange(num_images_before_load, num_images_after_load)
         print('{} images are loaded into the dataset from {}.'.format(num_images_after_load - num_images_before_load, source))
         
+    
     def load_real_scenes(self, dataset_dir):
-        """Load a subset of the ShapeNetScene dataset.
-        dataset_dir: The root directory of the ShapeNetScene dataset.
-        subset: What to load (train, val)
+        """Load a subset of the Real dataset.
+        dataset_dir: The root directory of the Real dataset.
+        subset: What to load (train, val, test)
         if_calculate_mean: if calculate the mean color of the images in this dataset
         """
 
         source = "Real"
         num_images_before_load = len(self.image_info)
 
-        folder_name = 'real_' + self.subset
+        folder_name = 'train' if self.subset == 'train' else 'test'
         image_dir = os.path.join(dataset_dir, folder_name)
         folder_list = [name for name in glob.glob(image_dir + '/*') if os.path.isdir(name)]
         folder_list = sorted(folder_list)
@@ -194,25 +191,6 @@ class TOICOCODataset(utils.Dataset):
 
         image_ids = list(set(image_ids))
 
-        
-        # if not class_ids:
-        #     # All classes
-        #     class_ids = sorted(coco.getCatIds())
-        # else:
-        #     class_ids = [coco.getCatIds(coco_names[x])[0] for x in class_ids]
-        #     print(class_ids)
-
-        # # All images or a subset?
-        # if class_ids:
-        #     image_ids = []
-        #     for id in class_ids:
-        #         image_ids.extend(list(coco.getImgIds(catIds=[id])))
-        #     # Remove duplicates
-        #     image_ids = list(set(image_ids))
-        # else:
-        #     # All images
-        #     image_ids = list(coco.imgs.keys())
-
         # Add classes
         for cls_id in class_ids:
             self.add_class("coco", cls_id, coco.loadCats(cls_id)[0]["name"])
@@ -240,7 +218,7 @@ class TOICOCODataset(utils.Dataset):
         Typically this function loads the image from a file.
         """
         info = self.image_info[image_id]
-        if info["source"] in ["ShapeNetTOI", "Real"]:
+        if info["source"] in ["CAMERA", "Real"]:
             image_path = info["path"] + '_color.png'
             assert os.path.exists(image_path), "{} is missing".format(image_path)
 
@@ -266,7 +244,7 @@ class TOICOCODataset(utils.Dataset):
         Typically this function loads the image from a file.
         """
         info = self.image_info[image_id]
-        if info["source"] in ["ShapeNetTOI", "Real"]:
+        if info["source"] in ["CAMERA", "Real"]:
             depth_path = info["path"] + '_depth.png'
             depth = cv2.imread(depth_path, -1)
 
@@ -283,25 +261,6 @@ class TOICOCODataset(utils.Dataset):
             
         return depth16
         
-
-    # def load_inst_bboxs(self, image_id):
-    #     """Generate an image from the specs of the given image ID.
-    #     Typically this function loads the image from a file.
-    #     """
-    #     info = self.image_info[image_id]
-
-    #     meta_path = info["path"] + '_meta.txt'
-
-    #     with open(meta_path, 'r') as f:
-    #         lines = f.readlines()
-
-    #     bboxs = np.zeros((len(lines), ))
-    #     for i, line in enumerate(lines):
-    #         words = line[:-1].split(' ')
-    #         bbox_file = os.path.join(self.config.OBJ_MODEL_DIR, self.subset, words[2], words[3], 'bbox.txt')
-    #         bbox = np.loadtxt(bbox_file)
-
-    #     return image
 
     def image_reference(self, image_id):
         """Return the object data of the image."""
@@ -417,11 +376,8 @@ class TOICOCODataset(utils.Dataset):
             assert np.sum(inst_mask) > 0
             assert inst_dict[inst_id]
                 
-            
             masks[:, :, i] = inst_mask
             coords[:, :, i, :] = np.multiply(coord_map, np.expand_dims(inst_mask, axis=-1))
-            if self.config.COORD_SECOND_NORM:
-                coords[:, :, i, :] = coords[:, :, i, :] / scale_factor[inst_id - 1, :]
 
             # class ids is also one-indexed
             class_ids[i] = inst_dict[inst_id]
@@ -446,7 +402,7 @@ class TOICOCODataset(utils.Dataset):
         info = self.image_info[image_id]
         #masks, coords, class_ids, scales, domain_label = None, None, None, None, None
 
-        if info["source"] in ["ShapeNetTOI", "Real"]:
+        if info["source"] in ["CAMERA", "Real"]:
             domain_label = 0 ## has coordinate map loss
 
             mask_path = info["path"] + '_mask.png'
@@ -519,7 +475,7 @@ class TOICOCODataset(utils.Dataset):
         # generate random rotation degree
         rotate_degree = np.random.uniform(-5, 5)
 
-        if info["source"] in ["ShapeNetTOI", "Real"]:
+        if info["source"] in ["CAMERA", "Real"]:
             domain_label = 0 ## has coordinate map loss
 
             mask_path = info["path"] + '_mask.png'
