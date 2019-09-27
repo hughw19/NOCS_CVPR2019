@@ -3,7 +3,7 @@ Created by <a href="http://ai.stanford.edu/~hewang/" target="_blank">He Wang</a>
 
 ![NOCS Teaser](https://github.com/hughw19/NOCS_CVPR2019/raw/master/images/teaser.jpg)
 
-### Citation
+## Citation
 If you find our work useful in your research, please consider citing:
 
      @InProceedings{Wang_2019_CVPR,
@@ -14,7 +14,7 @@ If you find our work useful in your research, please consider citing:
                    year = {2019}
 
 
-### Introduction
+## Introduction
 
 This is a keras and tensorflow implementation of [**Normalized Object Coordinate Space for Category-Level 6D Object Pose and Size Estimation**](https://arxiv.org/pdf/1901.02970.pdf), a **CVPR 2019 oral** paper. 
 
@@ -25,13 +25,15 @@ The repository includes:
 * Detection and evaluation code
 * Pre-trained weights
 
-# Requirements
+For more information, please visit the [**project page**](https://geometry.stanford.edu/projects/NOCS_CVPR2019/).
+
+## Requirements
 * Python 3.5
 * Tensorflow 1.14.0
 * Keras 2.3.0
 * cPickle
 
-# Datasets
+## Datasets
 * CAMERA Dataset: [Training](http://download.cs.stanford.edu/orion/nocs/camera_train.zip)/[Test](http://download.cs.stanford.edu/orion/nocs/camera_val25K.zip)
 * Real Dataset: [Training](http://download.cs.stanford.edu/orion/nocs/real_train.zip)/[Test](http://download.cs.stanford.edu/orion/nocs/real_test.zip)
 * Ground truth pose annotation (for an easier evaluation): [Val&Real_test](http://download.cs.stanford.edu/orion/nocs/gts.zip)
@@ -41,7 +43,7 @@ You can download the files and store them under data/.
 
 NOTE: You are required to cite our paper if you use the dataset. The data is only for non-commercial use. Please reach out to us for other use cases.
 
-# Pretrain weights
+## Pretrain weights
 You can find the following checkpoints in this [download link](http://download.cs.stanford.edu/orion/nocs/ckpts.zip):
 * NOCS RCNN jointly trained on CAMERA, Real & MS COCO with 32 bin classification setting
 * NOCS RCNN jointly trained on CAMERA, Real & MS COCO with regression setting
@@ -49,13 +51,13 @@ You can find the following checkpoints in this [download link](http://download.c
 
 You can download the checkpoints and store them under logs/.
 
-# Training
+## Training
 ```
 # Train a new model from pretrained COCO weight
 python3 train.py
 ```
 
-# Detection and Evaluation
+## Detection and Evaluation
 ```
 # Detect using a checkpoint
 python3 detect_eval.py --mode detect --ckpt_path=/logs/ckpt --draw
