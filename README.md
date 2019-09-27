@@ -26,7 +26,7 @@ You can download the files and store them under data/.
 
 NOTE: You are required to cite our paper if you use the dataset. The data is only for non-commercial use. Please reach out to us for other use cases.
 
-## Pretrain weights
+# Pretrain weights
 You can find the following checkpoints in this [download link](http://download.cs.stanford.edu/orion/nocs/ckpts.zip):
 * NOCS RCNN jointly trained on CAMERA, Real & MS COCO with 32 bin classification setting
 * NOCS RCNN jointly trained on CAMERA, Real & MS COCO with regression setting
