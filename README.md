@@ -10,11 +10,19 @@ The repository includes:
 * Detection and evaluation code
 * Pre-trained weights
 
+# Requirements
+* Python 3.5
+* Tensorflow 1.14.0
+* Keras 2.3.0
+* cPickle
+
 # Datasets
 * CAMERA Dataset: [Training](http://download.cs.stanford.edu/orion/nocs/camera_train.zip)/[Test](http://download.cs.stanford.edu/orion/nocs/camera_val25K.zip)
 * Real Dataset: [Training](http://download.cs.stanford.edu/orion/nocs/real_train.zip)/[Test](http://download.cs.stanford.edu/orion/nocs/real_test.zip)
 * Ground truth pose annotation (for an easier evaluation): [Val&Real_test](http://download.cs.stanford.edu/orion/nocs/gts.zip)
 * [Object Meshes](http://download.cs.stanford.edu/orion/nocs/obj_models.zip)
+
+You can download the files and store them under data/.
 
 NOTE: You are required to cite our paper if you use the dataset. The data is only for non-commercial use. Please reach out to us for other use cases.
 
@@ -24,12 +32,7 @@ You can find the following checkpoints in this [download link](http://download.c
 * NOCS RCNN jointly trained on CAMERA, Real & MS COCO with regression setting
 * Mask RCNN pretrained on MS COCO dataset 
 
-
-# Requirements
-* Python 3.5
-* Tensorflow 1.14.0
-* Keras 2.3.0
-* cPickle
+You can download the checkpoints and store them under logs/.
 
 # Training
 ```
