@@ -1,5 +1,5 @@
 # Normalized Object Coordinate Space for Category-Level 6D Object Pose and Size Estimation
-This is a keras and tensorflow implementation of [**Normalized Object Coordinate Space for Category-Level 6D Object Pose and Size Estimation**](https://arxiv.org/pdf/1901.02970.pdf), a CVPR 2019 oral paper. 
+This is a keras and tensorflow implementation of [**Normalized Object Coordinate Space for Category-Level 6D Object Pose and Size Estimation**](https://arxiv.org/pdf/1901.02970.pdf), a <span style="color:red">**CVPR 2019 oral**</span> paper. 
 
 ![NOCS Teaser](https://github.com/hughw19/NOCS_CVPR2019/raw/master/images/teaser.jpg)
 
