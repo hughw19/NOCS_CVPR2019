@@ -28,10 +28,12 @@ The repository includes:
 For more information, please visit the [**project page**](https://geometry.stanford.edu/projects/NOCS_CVPR2019/).
 
 ## Requirements
+This code has been tested with
+* CUDA 10.0 & cuDNN 7.41 
 * Python 3.5
 * Tensorflow 1.14.0
 * Keras 2.3.0
-* cPickle
+
 
 ## Datasets
 * CAMERA Dataset: [Training](http://download.cs.stanford.edu/orion/nocs/camera_train.zip)/[Test](http://download.cs.stanford.edu/orion/nocs/camera_val25K.zip)
