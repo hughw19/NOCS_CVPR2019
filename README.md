@@ -36,7 +36,7 @@ This code has been tested with
 
 
 ## Datasets
-* CAMERA Dataset: [Training](http://download.cs.stanford.edu/orion/nocs/camera_train.zip)/[Test](http://download.cs.stanford.edu/orion/nocs/camera_val25K.zip)
+* CAMERA Dataset: [Training](http://download.cs.stanford.edu/orion/nocs/camera_train.zip)/[Test](http://download.cs.stanford.edu/orion/nocs/camera_val25K.zip)/[IKEA_backgrounds](http://download.cs.stanford.edu/orion/nocs/ikea_data.zip)
 * Real Dataset: [Training](http://download.cs.stanford.edu/orion/nocs/real_train.zip)/[Test](http://download.cs.stanford.edu/orion/nocs/real_test.zip)
 * Ground truth pose annotation (for an easier evaluation): [Val&Real_test](http://download.cs.stanford.edu/orion/nocs/gts.zip)
 * [Object Meshes](http://download.cs.stanford.edu/orion/nocs/obj_models.zip)
