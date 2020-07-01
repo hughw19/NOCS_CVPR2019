@@ -104,7 +104,6 @@ if __name__ == '__main__':
 
     os.environ['CUDA_VISIBLE_DEVICES']=args.gpu
     print('Using GPU {}.'.format(args.gpu))
-    mode = args.mode
 
     config = ScenesConfig()
     config.display()
