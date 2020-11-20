@@ -25,7 +25,7 @@ The repository includes:
 * Detection and evaluation code
 * Pre-trained weights
 ```diff
-+ * Example code for using Blender to render NOCS map
++ Example code for using Blender to render NOCS map
 ```
 
 For more information, please visit the [**project page**](https://geometry.stanford.edu/projects/NOCS_CVPR2019/).
