@@ -24,6 +24,7 @@ The repository includes:
 * Training code
 * Detection and evaluation code
 * Pre-trained weights
+* Example code for using Blender to render NOCS map (<span style="color:green">New</span>)
 
 For more information, please visit the [**project page**](https://geometry.stanford.edu/projects/NOCS_CVPR2019/).
 
@@ -66,6 +67,13 @@ python3 detect_eval.py --mode detect --ckpt_path=/logs/ckpt --draw
 
 # Evaluate a checkpoint
 python3 detect_eval.py --mode eval --ckpt_path=/output/ckpt 
-
 ```
+
+## Rendering NOCS Map using Blender 2.79b
+```
+# Render the NOCS map for the default cube in Blender
+# See images/nocs_map_cube.png for the reference.
+blender -b --python nocs_map_cube.py 
+```
+
 
