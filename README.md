@@ -12,7 +12,7 @@ If you find our work useful in your research, please consider citing:
                    booktitle = {The IEEE Conference on Computer Vision and Pattern Recognition (CVPR)},
                    month = {June},
                    year = {2019}
-
+     }
 
 ## Introduction
 
